@@ -7,6 +7,18 @@
 
     <!-- update the version number as needed -->
     <script defer src="/__/firebase/5.0.3/firebase-app.js"></script>
+    <script>
+        // Initialize Firebase
+        var config = {
+          apiKey: "AIzaSyAYPbFh_M6hbxQoFfEzsE2O8XzkfsYDUgo",
+          authDomain: "aardvarkrepo.firebaseapp.com",
+          databaseURL: "https://aardvarkrepo.firebaseio.com",
+          projectId: "aardvarkrepo",
+          storageBucket: "aardvarkrepo.appspot.com",
+          messagingSenderId: "474648295298"
+        };
+        firebase.initializeApp(config);
+    </script>
     <!-- include only the Firebase features as you need -->
     <script defer src="/__/firebase/5.0.3/firebase-auth.js"></script>
     <script defer src="/__/firebase/5.0.3/firebase-database.js"></script>
@@ -15,7 +27,7 @@
     <!-- initialize the SDK after all desired features are loaded -->
     <script defer src="/__/firebase/init.js"></script>
   </head>
-  <body>
+  <body id="body">
     <script src="app.js"></script>
     <button id="button" onclick="googleLogin()">Login with Google</button>
   </body>
