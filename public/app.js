@@ -127,22 +127,22 @@ function updateAction(email, ref, textField, completeButton) {
 		var user = ref.child(email);
 		console.log(JSON.stringify(user.child("email")));
 		user.once("value", function(snapshot) {
-			//if (snapshot.val().waitTime === "1000") { // WHY IS THIS NULL
+			if (snapshot.val().waitTime === "1000") { // WHY IS THIS NULL
 				// TODO: move from pending to active
-			//	var active = firebase.database().ref().child("ACTIVE RIDES");
-			//	active.child(email).set({ 
-			//		email: snapshot.val().email,
-			//		end: snapshot.val().end,
-			//		endTime: snapshot.val().endTime,
-			//		eta: snapshot.val().eta,
-			//		numRiders: snapshot.val().numRiders,
-			//		start: snapshot.val().start,
-			//		time: snapshot.val().time,
-			//		waitTime: snapshot.val().waitTime,
-			//	});
-			//	user.remove();
-			//	completeButton.disabled = false;
-			//} 
+				var active = firebase.database().ref().child("ACTIVE RIDES");
+				active.child(email).set({ 
+					email: snapshot.val().email,
+					end: snapshot.val().end,
+					endTime: snapshot.val().endTime,
+					eta: snapshot.val().eta,
+					numRiders: snapshot.val().numRiders,
+					start: snapshot.val().start,
+					time: snapshot.val().time,
+					waitTime: snapshot.val().waitTime,
+				});
+				user.remove();
+				completeButton.disabled = false;
+			} 
 			var d = new Date();
 			var newDate = new Date(d.getTime() + waitTime*60000);
 			var eta = newDate.getHours() + ":" + newDate.getMinutes();
@@ -151,7 +151,7 @@ function updateAction(email, ref, textField, completeButton) {
 	}
 }
 
-function completeAction(email, ref) { //TODO: add reset somewhere
+function completeAction(email, ref) { 
 	var user = ref.child(email);
 	user.once("value", function(snapshot) {
 		var d = new Date();
@@ -172,7 +172,7 @@ function completeAction(email, ref) { //TODO: add reset somewhere
 	});
 }
 
-function cancelAction(email, ref) { //TODO: add reset somewhere
+function cancelAction(email, ref) { 
 	var user = ref.child(email);
 	user.once("value", function(snapshot) {
 		var cancelled = firebase.database().ref().child("CANCELLED RIDES");
