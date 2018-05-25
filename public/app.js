@@ -28,21 +28,25 @@ function afterLogin(user) {
 
 function correctLogin() {
 	var ref = firebase.database().ref();
-	
+
+	document.getElementById("div").remove();
 	document.getElementById("button").remove();
+	
+	var title = document.createElement("p");
+	document.body.appendChild(title);
+	title.innerHTML = "<h1>Aces Dispatcher App </h1><br>";
+	document.body.appendChild(document.createTextNode("Status: "));
 	var status = document.createElement("BUTTON");
 	status.addEventListener("click", function() { toggleStatus(ref); });
-	var text = document.createTextNode("Status");
-	status.appendChild(text);
 	document.body.appendChild(status);
 
 	var htmlItemsPending = [];
 	var htmlItemsActive = [];
 
-	var pendingRidesRef = ref.child("CURRENT RIDES");
+	var pendingRidesRef = ref.child("PENDING RIDES");
 	pendingRidesRef.on("value", function(snapshot) { 
 		reset(htmlItemsPending);
-		var output = "Pending Rides:<br>";
+		var output = "<h2>Pending Rides:</h2><br>";
 		snapshot.forEach(function(child) {
 			var email = child.child("email").val();
 			output = output + "Email: "+email + "<br>" +
@@ -58,7 +62,7 @@ function correctLogin() {
 	var activeRidesRef = ref.child("ACTIVE RIDES");
 	activeRidesRef.on("value", function(snapshot) {
 		reset(htmlItemsActive);
-		var output = "Active Rides:<br>";
+		var output = "<h2>Active Rides:</h2><br>";
 		snapshot.forEach(function(child) {
 			var email = child.child("email").val();
 			output = output + "Email: "+email + "<br>" +
@@ -77,9 +81,11 @@ function correctLogin() {
 	var flagRef = ref.child("STATUS");
 	flagRef.on("value", function(snapshot) {
 		if(snapshot.val().FLAG === "ON") {
-			status.innerHTML = "ON";
+			status.innerHTML = "ONLINE";
+			status.style.background = "#008000";
 		} else {
-			status.innerHTML = "OFF";
+			status.innerHTML = "OFFLINE";
+			status.style.background = "#ff0000";
 		}
 	})
 }
@@ -94,20 +100,25 @@ function createTextAndButtons(output, email, ref, type, htmlItems) {
 	textField.setAttribute("type", "text");
 	updateButton.innerHTML = "Update Wait Time";
 	var db = firebase.database().ref();
-	if (type === "pending") {
-		completeButton.disabled = true;
-	}
 	completeButton.innerHTML = "Complete Ride";
 	cancelButton.innerHTML = "Cancel Ride";
 	updateButton.addEventListener("click", function() { updateAction(email, ref, textField, completeButton) });
 	completeButton.addEventListener("click", function() { completeAction(email, ref) });
-	cancelButton.addEventListener("click", function() { cancelAction(email, ref) });
+	cancelButton.addEventListener("click", function() { cancelAction(email, ref, type) });
 	htmlItems.push(para, textField, updateButton, completeButton, cancelButton);
 	document.body.appendChild(para);
 	document.body.appendChild(textField);
 	document.body.appendChild(updateButton);
 	document.body.appendChild(completeButton);
 	document.body.appendChild(cancelButton);
+	if (type === "pending") {
+		completeButton.disabled = true;
+		var activeRidesRef = firebase.database().ref().child("ACTIVE RIDES");
+			activeRidesRef.child("update").set({
+				email: "update"
+			});
+			activeRidesRef.child("update").remove();
+	}
 }
 
 function toggleStatus(ref) {
@@ -125,28 +136,33 @@ function updateAction(email, ref, textField, completeButton) {
 	var waitTime = textField.value;
 	if (waitTime !== "") {
 		var user = ref.child(email);
-		console.log(JSON.stringify(user.child("email")));
 		user.once("value", function(snapshot) {
-			if (snapshot.val().waitTime === "1000") { // WHY IS THIS NULL
-				// TODO: move from pending to active
+			if (snapshot.val().waitTime == "1000") {
+				var d = new Date();
+				var newDate = new Date(d.getTime() + waitTime*60000);
+				var eta = newDate.getHours() + ":" + newDate.getMinutes();
 				var active = firebase.database().ref().child("ACTIVE RIDES");
-				active.child(email).set({ 
-					email: snapshot.val().email,
-					end: snapshot.val().end,
-					endTime: snapshot.val().endTime,
-					eta: snapshot.val().eta,
-					numRiders: snapshot.val().numRiders,
-					start: snapshot.val().start,
-					time: snapshot.val().time,
-					waitTime: snapshot.val().waitTime,
-				});
+				var attributes = [snapshot.val().email, snapshot.val().end, 
+					snapshot.val().endTime, eta, snapshot.val().numRiders, 
+					snapshot.val().start, snapshot.val().time, waitTime];
 				user.remove();
 				completeButton.disabled = false;
-			} 
-			var d = new Date();
-			var newDate = new Date(d.getTime() + waitTime*60000);
-			var eta = newDate.getHours() + ":" + newDate.getMinutes();
-			user.update({"waitTime" : waitTime, "eta" : eta});
+				active.child(email).set({ 
+					email: attributes[0],
+					end: attributes[1],
+					endTime: attributes[2],
+					eta: attributes[3],
+					numRiders: attributes[4],
+					start: attributes[5],
+					time: attributes[6],
+					waitTime: attributes[7],
+				});
+			} else {
+				var d = new Date();
+				var newDate = new Date(d.getTime() + waitTime*60000);
+				var eta = newDate.getHours() + ":" + newDate.getMinutes();
+				user.update({"waitTime" : waitTime, "eta" : eta});
+			}
 		});
 	}
 }
@@ -172,7 +188,7 @@ function completeAction(email, ref) {
 	});
 }
 
-function cancelAction(email, ref) { 
+function cancelAction(email, ref, type) { 
 	var user = ref.child(email);
 	user.once("value", function(snapshot) {
 		var cancelled = firebase.database().ref().child("CANCELLED RIDES");
@@ -187,6 +203,13 @@ function cancelAction(email, ref) {
 			waitTime: snapshot.val().waitTime,
 		});
 		user.remove();
+		if (type === "pending") {
+			var activeRidesRef = firebase.database().ref().child("ACTIVE RIDES");
+			activeRidesRef.child("update").set({
+				email: "update"
+			});
+			activeRidesRef.child("update").remove();
+		}
 	});
 }
 
