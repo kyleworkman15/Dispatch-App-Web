@@ -102,6 +102,10 @@ function createTextAndButtons(output, email, ref, type, htmlItems) {
 	var db = firebase.database().ref();
 	completeButton.innerHTML = "Complete Ride";
 	cancelButton.innerHTML = "Cancel Ride";
+	textField.addEventListener("keyup", function(event){
+		event.preventDefault();
+		if (event.keyCode === 13) { updateButton.click(); }
+	});
 	updateButton.addEventListener("click", function() { updateAction(email, ref, textField, completeButton) });
 	completeButton.addEventListener("click", function() { completeAction(email, ref) });
 	cancelButton.addEventListener("click", function() { cancelAction(email, ref, type) });
