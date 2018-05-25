@@ -1,22 +1,26 @@
-document.addEventListener("DOMContentLoaded", event => {
-	
-	const app = firebase.app();
+// Author: Kyle Workman 
+// * Built based off the Dispatch Aces Android App
+//   designed by Tyler May, Kevin Barbian, Megan Janssen, Tan Nguyen.
+// Description: Augustana Aces Dispatcher Application
+// for managing the Aces uber system accross campus. 
 
+// Wait for page to finish loading.
+document.addEventListener("DOMContentLoaded", event => {
+	const app = firebase.app();
 });
 
+// Login with google via a pop-up window.
 function googleLogin() {
 	const provider = new firebase.auth.GoogleAuthProvider();
-	
 	firebase.auth().signInWithPopup(provider)
-	
 			.then(result => {
 				const user = result.user;
 				afterLogin(user);
 			})
-			.catch(console.log)
-			
+			.catch(console.log)	
 }
 
+// Check that the user is a dispatcher.
 function afterLogin(user) {
 	const email = user.email;
 	if (email === "kyleworkman15@augustana.edu" || email === "csc490teama@augustana.edu") {
@@ -26,23 +30,73 @@ function afterLogin(user) {
 	}
 }
 
+// Build the web page using the firebase data.
 function correctLogin() {
 	var ref = firebase.database().ref();
 
-	document.getElementById("div").remove();
-	document.getElementById("button").remove();
-	
-	var title = document.createElement("p");
-	document.body.appendChild(title);
-	title.innerHTML = "<h1>Aces Dispatcher App </h1><br>";
-	document.body.appendChild(document.createTextNode("Status: "));
-	var status = document.createElement("BUTTON");
-	status.addEventListener("click", function() { toggleStatus(ref); });
-	document.body.appendChild(status);
+	removePreviousComponents();
+	buildText();
 
 	var htmlItemsPending = [];
 	var htmlItemsActive = [];
 
+	constructStatus(ref);
+	constructPendingRides(ref, htmlItemsPending);
+	constructActiveRides(ref, htmlItemsActive);
+}
+
+// Removes components from the login screen.
+function removePreviousComponents() {
+	document.getElementById("div").remove();
+	document.getElementById("button").remove();
+}
+
+// Adds the text for the title and status indicator.
+function buildText() {
+	var title = document.createElement("p");
+	document.body.appendChild(title);
+	title.innerHTML = "<h1>Aces Dispatcher App </h1><br>";
+	document.body.appendChild(document.createTextNode("Status: "));
+}
+
+// Constructs the status indicator button to toggle the Aces service
+// on and off.
+// Parameters: ref - reference to the firebase database
+function constructStatus(ref) {
+	var status = document.createElement("BUTTON");
+	status.addEventListener("click", function() { toggleStatus(ref); });
+	document.body.appendChild(status);
+	var flagRef = ref.child("STATUS");
+	flagRef.on("value", function(snapshot) {
+		if(snapshot.val().FLAG === "ON") {
+			status.innerHTML = "ONLINE";
+			status.style.background = "#008000";
+		} else {
+			status.innerHTML = "OFFLINE";
+			status.style.background = "#ff0000";
+		}
+	})
+}
+
+// Toggles the status of the database on and off.
+// Parameters: ref - reference to the firebase database
+function toggleStatus(ref) {
+	var flagRef = ref.child("STATUS");
+	flagRef.once("value", function(snapshot) {
+		if (snapshot.val().FLAG === "ON") {
+			flagRef.update({"FLAG" : "OFF"});
+		} else {
+			flagRef.update({"FLAG" : "ON"});
+		}
+	});
+}
+
+// Constructs the list of pending rides including the text,
+// input text field, and the buttons.
+// Parameters: ref - reference to the firebase database
+//             htmlItemsPending - array to hold all html items currently
+//								  being used by the pending rides
+function constructPendingRides(ref, htmlItemsPending) {
 	var pendingRidesRef = ref.child("PENDING RIDES");
 	pendingRidesRef.on("value", function(snapshot) { 
 		reset(htmlItemsPending);
@@ -58,7 +112,14 @@ function correctLogin() {
 			output = "";
 		});
 	});
+}
 
+// Constructs the list of active rides including the text,
+// input text field, and the buttons.
+// Parameters: ref - reference to the firebase database
+// 		       htmlItemsActive - array to hold all html items currently
+// 			  		 	 	     being used by the acitve rides
+function constructActiveRides(ref, htmlItemsActive) {
 	var activeRidesRef = ref.child("ACTIVE RIDES");
 	activeRidesRef.on("value", function(snapshot) {
 		reset(htmlItemsActive);
@@ -77,19 +138,15 @@ function correctLogin() {
 			output = "";
 		});
 	});
-
-	var flagRef = ref.child("STATUS");
-	flagRef.on("value", function(snapshot) {
-		if(snapshot.val().FLAG === "ON") {
-			status.innerHTML = "ONLINE";
-			status.style.background = "#008000";
-		} else {
-			status.innerHTML = "OFFLINE";
-			status.style.background = "#ff0000";
-		}
-	})
 }
 
+// Creates all of the text, text fields, and buttons needed for a single ride. 
+// Parameters: output - text to be displayed
+//			   email - current email of the ride
+//			   ref - reference to the firebase tree (pending or active)
+//			   type - string to determine if the ride is pending or active
+//			   htmlItems - array for holding html items currently being used
+// 						   by this current ride
 function createTextAndButtons(output, email, ref, type, htmlItems) {
 	var para = document.createElement("p");
 	var textField = document.createElement("INPUT");
@@ -99,7 +156,6 @@ function createTextAndButtons(output, email, ref, type, htmlItems) {
 	para.innerHTML = output;
 	textField.setAttribute("type", "text");
 	updateButton.innerHTML = "Update Wait Time";
-	var db = firebase.database().ref();
 	completeButton.innerHTML = "Complete Ride";
 	cancelButton.innerHTML = "Cancel Ride";
 	textField.addEventListener("keyup", function(event){
@@ -117,25 +173,15 @@ function createTextAndButtons(output, email, ref, type, htmlItems) {
 	document.body.appendChild(cancelButton);
 	if (type === "pending") {
 		completeButton.disabled = true;
-		var activeRidesRef = firebase.database().ref().child("ACTIVE RIDES");
-			activeRidesRef.child("update").set({
-				email: "update"
-			});
-			activeRidesRef.child("update").remove();
 	}
+	checkReorder(type);
 }
 
-function toggleStatus(ref) {
-	var flagRef = ref.child("STATUS");
-	flagRef.once("value", function(snapshot) {
-		if (snapshot.val().FLAG === "ON") {
-			flagRef.update({"FLAG" : "OFF"});
-		} else {
-			flagRef.update({"FLAG" : "ON"});
-		}
-	});
-}
-
+// Method for handeling the update action from the update button.
+// Parameters: email - current email of the ride
+//			   ref - reference to the firebase tree (pending or active)
+// 			   textField - input field to update the wait time value
+//			   completeButton - button used for completing a ride
 function updateAction(email, ref, textField, completeButton) {
 	var waitTime = textField.value;
 	if (waitTime !== "") {
@@ -171,6 +217,9 @@ function updateAction(email, ref, textField, completeButton) {
 	}
 }
 
+// Method for handeling the complete action from the complete button.
+// Parameters: email - current email of the ride
+// 			   ref - reference to the firebase tree (pending or active)
 function completeAction(email, ref) { 
 	var user = ref.child(email);
 	user.once("value", function(snapshot) {
@@ -192,6 +241,10 @@ function completeAction(email, ref) {
 	});
 }
 
+// Method for handeling the cancel action from the cancel button.
+// Parameters: email - current email of the ride
+// 			   ref - reference to the firebase tree (pending or active)
+// 			   type - string to determine if the ride is pending or active
 function cancelAction(email, ref, type) { 
 	var user = ref.child(email);
 	user.once("value", function(snapshot) {
@@ -207,16 +260,25 @@ function cancelAction(email, ref, type) {
 			waitTime: snapshot.val().waitTime,
 		});
 		user.remove();
-		if (type === "pending") {
-			var activeRidesRef = firebase.database().ref().child("ACTIVE RIDES");
-			activeRidesRef.child("update").set({
-				email: "update"
-			});
-			activeRidesRef.child("update").remove();
-		}
+		checkReorder(type);
 	});
 }
 
+// Moves the active ride list down (if need be) by creating and removing dummy 
+// data in the firebase database.
+// Parameters: type - string to determine if the ride is pending or active
+function checkReorder(type) {
+	if (type === "pending") {
+		var activeRidesRef = firebase.database().ref().child("ACTIVE RIDES");
+		activeRidesRef.child("update").set({
+			email: "update"
+		});
+		activeRidesRef.child("update").remove();
+	}
+}
+
+// Removes all of the html items in the given array (htmlItems)
+// from the document and clears the array.
 function reset(htmlItems) {
 	htmlItems.forEach(function(entry) {
 		document.body.removeChild(entry);
