@@ -178,7 +178,7 @@ function constructActiveRides(ref, htmlItemsActive) {
 		reset(htmlItemsActive);
 		var output = "<h2>Active Rides:</h2><br>";
 		snapshot.forEach(function(child) {
-			var email = child.child("email");
+			var email = child.child("email").val();
 			output = output + "Email: "+email.replace(",", ".") + "<br>" +
 			"Time: "+child.child("time").val() + "<br>" +
 			"Number of Riders: "+child.child("numRiders").val() + "<br>" +
