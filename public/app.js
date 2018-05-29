@@ -188,9 +188,7 @@ function updateAction(email, ref, textField, completeButton) {
 		var user = ref.child(email);
 		user.once("value", function(snapshot) {
 			if (snapshot.val().waitTime == "1000") {
-				var d = new Date();
-				var newDate = new Date(d.getTime() + waitTime*60000);
-				var eta = newDate.getHours() + ":" + newDate.getMinutes();
+				var eta = calculateETA(waitTime);
 				var active = firebase.database().ref().child("ACTIVE RIDES");
 				var attributes = [snapshot.val().email, snapshot.val().end, 
 					snapshot.val().endTime, eta, snapshot.val().numRiders, 
@@ -208,12 +206,29 @@ function updateAction(email, ref, textField, completeButton) {
 					waitTime: attributes[7],
 				});
 			} else {
-				var d = new Date();
-				var newDate = new Date(d.getTime() + waitTime*60000);
-				var eta = newDate.getHours() + ":" + newDate.getMinutes();
+				var eta = calculateETA(waitTime);
 				user.update({"waitTime" : waitTime, "eta" : eta});
 			}
 		});
+	}
+}
+
+// Calculates the eta with the given wait time and formats the eta
+// as HH:MM AM/PM and returns that String value
+// Parameters: waitTime - the wait time for the ride
+function calculateETA(waitTime) {
+	var d = new Date();
+	var newDate = new Date(d.getTime() + waitTime*60000);
+	var hours = newDate.getHours();
+	var minutes = newDate.getMinutes();
+	var stringMinutes = "" + minutes;
+	if (minutes < 10) {
+		stringMinutes = "0" + minutes;
+	}
+	if (hours < 12) {
+		return hours + ":" + stringMinutes + " AM";
+	} else {
+		return (hours - 12) + ":" + stringMinutes + " PM";
 	}
 }
 
@@ -223,9 +238,7 @@ function updateAction(email, ref, textField, completeButton) {
 function completeAction(email, ref) { 
 	var user = ref.child(email);
 	user.once("value", function(snapshot) {
-		var d = new Date();
-		var endTime = d.getHours() + ":" + d.getMinutes();
-		user.update({"endTime" : endTime});
+		user.update({"endTime" : calculateETA(0)});
 		var archived = firebase.database().ref().child("ARCHIVED RIDES");
 		archived.child(email).set({ //TODO: ADD TIME/DATE to end of the email
 			email: snapshot.val().email,
@@ -248,11 +261,12 @@ function completeAction(email, ref) {
 function cancelAction(email, ref, type) { 
 	var user = ref.child(email);
 	user.once("value", function(snapshot) {
+		user.update({"endTime" : "Cancelled by Dispatcher"});
 		var cancelled = firebase.database().ref().child("CANCELLED RIDES");
 		cancelled.child(email).set({ 
 			email: snapshot.val().email,
 			end: snapshot.val().end,
-			endTime: "Cancelled by Dispatcher",
+			endTime: snapshot.val().endTime,
 			eta: snapshot.val().eta,
 			numRiders: snapshot.val().numRiders,
 			start: snapshot.val().start,
