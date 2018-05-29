@@ -41,6 +41,7 @@ function correctLogin() {
 	var htmlItemsActive = [];
 
 	constructStatus(ref);
+	constructAddRide(ref);
 	constructPendingRides(ref, htmlItemsPending);
 	constructActiveRides(ref, htmlItemsActive);
 }
@@ -91,6 +92,58 @@ function toggleStatus(ref) {
 	});
 }
 
+// Constructs the fields and buttons needed for adding a ride manually.
+// Parameters: ref - reference to the firebase database
+function constructAddRide(ref) {
+	var title = document.createElement("p");
+	title.innerHTML = "<h2>Add a ride:</h2>";
+	document.body.appendChild(title);
+	var texts = ["Email: ", "From: ", "To: ", "Number of Riders: "];
+	var fields = [];
+	texts.forEach(element => {
+		var para = document.createElement("p");
+		para.innerHTML = element;
+		document.body.appendChild(para);
+		var field = document.createElement("INPUT");
+		field.setAttribute("type", "text");
+		document.body.appendChild(field);
+		fields.push(field);
+	});
+	var addRide = document.createElement("BUTTON");
+	addRide.innerHTML = "Add Ride";
+	addRide.addEventListener("click", function() { addRideAction(ref, fields) });
+	document.body.appendChild(document.createElement("p"));
+	document.body.appendChild(addRide);
+}
+
+// Method for handeling the add ride action from the add ride button.
+// Parameters: ref - reference to the firebase database
+// 			   fields - array of text fields
+function addRideAction(ref, fields) {
+	var email = fields[0].value;
+	var pendingRidesRef = ref.child("PENDING RIDES");
+	var date = new Date();
+	pendingRidesRef.child(email).set({ 
+		email: email,
+		end: fields[2].value,
+		endTime: " ",
+		eta: " ",
+		numRiders: fields[3].value,
+		start: fields[1].value,
+		time: date.getMonth() + "/" + date.getDay() + "/" + date.getFullYear() + " " + calculateETA(0),
+		waitTime: 1000,
+	});
+	clearFields(fields);
+}
+
+// Clears all the text fields for adding a ride.
+// Parameters: fields - array of text fields
+function clearFields(fields) {
+	fields.forEach(element => {
+		element.value = "";
+	});
+}
+
 // Constructs the list of pending rides including the text,
 // input text field, and the buttons.
 // Parameters: ref - reference to the firebase database
@@ -132,8 +185,8 @@ function constructActiveRides(ref, htmlItemsActive) {
 			"From: "+child.child("start").val() + "<br>" +
 			"To: "+child.child("end").val() + "<br>" +
 			"Current Wait Time: "+child.child("waitTime").val() + "<br>" +
-			"ETA: "+child.child("eta").val() + "<br>" +
-			"End Time: "+child.child("endTime").val() + "<br>";
+			"ETA: "+child.child("eta").val() + "<br>";
+			//"End Time: "+child.child("endTime").val() + "<br>";
 			createTextAndButtons(output, email, activeRidesRef, "active", htmlItemsActive);
 			output = "";
 		});
