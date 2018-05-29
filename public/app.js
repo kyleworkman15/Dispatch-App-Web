@@ -155,8 +155,8 @@ function constructPendingRides(ref, htmlItemsPending) {
 		reset(htmlItemsPending);
 		var output = "<h2>Pending Rides:</h2><br>";
 		snapshot.forEach(function(child) {
-			var email = child.child("email").val().replace(",", ".");
-			output = output + "Email: "+email + "<br>" +
+			var email = child.child("email").val();
+			output = output + "Email: "+email.replace(",", ".") + "<br>" +
 			"Time: "+child.child("time").val() + "<br>" +
 			"Number of Riders: "+child.child("numRiders").val() + "<br>" +
 			"From: "+child.child("start").val() + "<br>" +
@@ -178,8 +178,8 @@ function constructActiveRides(ref, htmlItemsActive) {
 		reset(htmlItemsActive);
 		var output = "<h2>Active Rides:</h2><br>";
 		snapshot.forEach(function(child) {
-			var email = child.child("email").val().replace(",", ".");
-			output = output + "Email: "+email + "<br>" +
+			var email = child.child("email");
+			output = output + "Email: "+email.replace(",", ".") + "<br>" +
 			"Time: "+child.child("time").val() + "<br>" +
 			"Number of Riders: "+child.child("numRiders").val() + "<br>" +
 			"From: "+child.child("start").val() + "<br>" +
