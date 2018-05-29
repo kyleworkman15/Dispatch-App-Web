@@ -120,7 +120,7 @@ function constructAddRide(ref) {
 // Parameters: ref - reference to the firebase database
 // 			   fields - array of text fields
 function addRideAction(ref, fields) {
-	var email = fields[0].value;
+	var email = fields[0].value.replace(".", ",");
 	var pendingRidesRef = ref.child("PENDING RIDES");
 	var date = new Date();
 	pendingRidesRef.child(email).set({ 
@@ -155,7 +155,7 @@ function constructPendingRides(ref, htmlItemsPending) {
 		reset(htmlItemsPending);
 		var output = "<h2>Pending Rides:</h2><br>";
 		snapshot.forEach(function(child) {
-			var email = child.child("email").val();
+			var email = child.child("email").val().replace(",", ".");
 			output = output + "Email: "+email + "<br>" +
 			"Time: "+child.child("time").val() + "<br>" +
 			"Number of Riders: "+child.child("numRiders").val() + "<br>" +
@@ -178,7 +178,7 @@ function constructActiveRides(ref, htmlItemsActive) {
 		reset(htmlItemsActive);
 		var output = "<h2>Active Rides:</h2><br>";
 		snapshot.forEach(function(child) {
-			var email = child.child("email").val();
+			var email = child.child("email").val().replace(",", ".");
 			output = output + "Email: "+email + "<br>" +
 			"Time: "+child.child("time").val() + "<br>" +
 			"Number of Riders: "+child.child("numRiders").val() + "<br>" +
