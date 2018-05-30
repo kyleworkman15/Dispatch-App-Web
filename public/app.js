@@ -234,6 +234,7 @@ function addRideAction(ref, fields) {
 			start: fields[1].value,
 			time: date.getMonth() + "/" + date.getDay() + "/" + date.getFullYear() + " " + calculateETA(0),
 			waitTime: 1000,
+			timestamp: + new Date(),
 		});
 		clearFields(fields);
 	} else {
@@ -256,7 +257,7 @@ function clearFields(fields) {
 //								  being used by the pending rides
 function constructPendingRides(ref, htmlItemsPending, column) {
 	var pendingRidesRef = ref.child("PENDING RIDES");
-	pendingRidesRef.on("value", function(snapshot) { 
+	pendingRidesRef.orderByChild("timestamp").on("value", function(snapshot) { 
 		reset(htmlItemsPending, column);
 		var output = "<h2>Pending Rides:</h2><br>";
 		snapshot.forEach(function(child) {
@@ -279,7 +280,7 @@ function constructPendingRides(ref, htmlItemsPending, column) {
 // 			  		 	 	     being used by the acitve rides
 function constructActiveRides(ref, htmlItemsActive, column) {
 	var activeRidesRef = ref.child("ACTIVE RIDES");
-	activeRidesRef.on("value", function(snapshot) {
+	activeRidesRef.orderByChild("timestamp").on("value", function(snapshot) {
 		reset(htmlItemsActive, column);
 		var output = "<h2>Active Rides:</h2><br>";
 		snapshot.forEach(function(child) {
@@ -328,7 +329,7 @@ function createTextAndButtons(output, email, ref, type, htmlItems, column) {
 	if (type === "pending") {
 		completeButton.disabled = true;
 	}
-	checkReorder(type);
+	//checkReorder(type);
 }
 
 // Method for handeling the update action from the update button.
@@ -433,6 +434,7 @@ function cancelAction(email, ref, type) {
 	});
 }
 
+// NO LONGER NEEDED BECAUSE OF COLUMNS
 // Moves the active ride list down (if need be) by creating and removing dummy 
 // data in the firebase database.
 // Parameters: type - string to determine if the ride is pending or active
