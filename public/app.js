@@ -35,15 +35,28 @@ function correctLogin() {
 	var ref = firebase.database().ref();
 
 	removePreviousComponents();
-	buildText();
+	var div = buildText();
 
 	var htmlItemsPending = [];
 	var htmlItemsActive = [];
 
-	constructStatus(ref);
+	constructStatus(ref, div);
+	constructExport(ref);
 	constructAddRide(ref);
-	constructPendingRides(ref, htmlItemsPending);
-	constructActiveRides(ref, htmlItemsActive);
+
+	// construct the two columns
+	var row = document.createElement("div");
+	row.setAttribute("class", "row");
+	var left = document.createElement("div");
+	left.setAttribute("class", "column");
+	var right = document.createElement("div");
+	right.setAttribute("class", "column");
+	row.appendChild(left);
+	row.appendChild(right);
+	document.body.appendChild(row);
+
+	constructPendingRides(ref, htmlItemsPending, left);
+	constructActiveRides(ref, htmlItemsActive, right);
 }
 
 // Removes components from the login screen.
@@ -57,16 +70,23 @@ function buildText() {
 	var title = document.createElement("p");
 	document.body.appendChild(title);
 	title.innerHTML = "<h1>Aces Dispatcher App </h1><br>";
-	document.body.appendChild(document.createTextNode("Status: "));
+	title.style.textAlign = "center";
+	var div = document.createElement("div");
+	var statusText = document.createElement("p");
+	statusText.innerHTML = "<h3>Status</h3>"
+	div.style.textAlign = "center";
+	div.appendChild(statusText);
+	document.body.appendChild(div);
+	return div;
 }
 
 // Constructs the status indicator button to toggle the Aces service
 // on and off.
 // Parameters: ref - reference to the firebase database
-function constructStatus(ref) {
+function constructStatus(ref, div) {
 	var status = document.createElement("BUTTON");
 	status.addEventListener("click", function() { toggleStatus(ref); });
-	document.body.appendChild(status);
+	div.appendChild(status);
 	var flagRef = ref.child("STATUS");
 	flagRef.on("value", function(snapshot) {
 		if(snapshot.val().FLAG === "ON") {
@@ -92,48 +112,133 @@ function toggleStatus(ref) {
 	});
 }
 
+// Constructs the text and button needed for exporting data.
+// Parameters: ref - reference to the firebase database
+function constructExport(ref) {
+	var div = document.createElement("div");
+	div.style.textAlign = "center";
+	var finish = document.createElement("BUTTON");
+	finish.innerHTML = "Finish session and download spreadsheet";
+	finish.addEventListener("click", function() { exportAction(ref) });
+	div.appendChild(document.createElement("p"));
+	div.appendChild(finish);
+	document.body.appendChild(div);
+}
+
+// Method for handeling the export to CSV file when the button is clicked.
+// Parameters: ref - reference to the firebase database
+function exportAction(ref) {
+	var completed = ref.child("COMPLETED RIDES");
+	var cancelled = ref.child("CANCELLED RIDES");
+	exportMove(completed, "COMPLETED");
+	exportMove(cancelled, "CANCELLED");
+}
+
+// Method for moving the completed/cancelled rides to archived.
+// Parameters: ref - reference to the firebase database (completed or cancelled)
+// 			   type - string to determine which type to construct new tree under
+function exportMove(ref, type) {
+	ref.once("value", function(snapshot) {
+		var archived = firebase.database().ref().child("ARCHIVED");
+		var data = new Array(snapshot.numChildren());
+		var index = 0;
+		snapshot.forEach(function(child) {
+			var values = child.val();
+			data[index] = new Array(values.email, values.end, values.endTime, values.eta, values.numRiders, values.start, values.time, values.waitTime);
+			console.log(data);
+			archived.child(type).child(data[index][0]).set({ 
+				email: data[index][0],
+				end: data[index][1],
+				endTime: data[index][2],
+				eta: data[index][3],
+				numRiders: data[index][4],
+				start: data[index][5],
+				time: data[index][6],
+				waitTime: data[index][7],
+			});
+			ref.child(data[index][0]).remove();
+			index++;
+		});
+		exportToCSV(data, type);
+	});
+}
+
+// Method for exporting the completed/cancelled rides to a CSV file.
+// Parameters: data - the data as a 2D array to be exported to a CSV
+//     	 	   type - string to determine which type of rides (completed or cancelled)
+function exportToCSV(data, type) {
+	let csvContent = "data:text/csv;charset=utf-8,Email,To,End Time,ETA,Number of Riders,From,Time,Wait Time,\r\n";
+	console.log(data);
+	data.forEach(function(rowArray) {
+		csvContent += rowArray.join(",") + "\r\n";
+	});
+	console.log(csvContent);
+	var encodedUri = encodeURI(csvContent);
+	var link = document.createElement("a");
+	link.setAttribute("href", encodedUri);
+	var date = new Date();
+	var dateString = date.getMonth() + "-" + date.getDay() + "-" + date.getFullYear() + "_" + calculateETA(0)
+	link.setAttribute("download", type + "_" + dateString + ".csv");
+	document.body.appendChild(link);
+	link.click();
+}
+
 // Constructs the fields and buttons needed for adding a ride manually.
 // Parameters: ref - reference to the firebase database
 function constructAddRide(ref) {
+	var div = document.createElement("div");
+	div.style.textAlign = "center";
+	div.style.alignContent = "left";
 	var title = document.createElement("p");
 	title.innerHTML = "<h2>Add a ride:</h2>";
-	document.body.appendChild(title);
+	div.appendChild(title);
 	var texts = ["Email: ", "From: ", "To: ", "Number of Riders: "];
 	var fields = [];
+	var addRide = document.createElement("BUTTON");
 	texts.forEach(element => {
-		var para = document.createElement("p");
-		para.innerHTML = element;
-		document.body.appendChild(para);
+		div.appendChild(document.createTextNode(element));
 		var field = document.createElement("INPUT");
 		field.setAttribute("type", "text");
-		document.body.appendChild(field);
+		field.addEventListener("keyup", function(event){ enterAction(event, addRide) });
+		div.appendChild(field);
+		div.appendChild(document.createTextNode(" "));
 		fields.push(field);
 	});
-	var addRide = document.createElement("BUTTON");
 	addRide.innerHTML = "Add Ride";
 	addRide.addEventListener("click", function() { addRideAction(ref, fields) });
-	document.body.appendChild(document.createElement("p"));
-	document.body.appendChild(addRide);
+	div.appendChild(addRide);
+	document.body.appendChild(div);
+}
+
+// Method for handeling the enter action when the enter key is pressed.
+// Parameters: button - the button to be clicked when the enter key is pressed
+function enterAction(event, button) {
+	event.preventDefault();
+	if (event.keyCode === 13) { button.click() };
 }
 
 // Method for handeling the add ride action from the add ride button.
 // Parameters: ref - reference to the firebase database
 // 			   fields - array of text fields
 function addRideAction(ref, fields) {
-	var email = fields[0].value.replace(".", ",");
-	var pendingRidesRef = ref.child("PENDING RIDES");
-	var date = new Date();
-	pendingRidesRef.child(email).set({ 
-		email: email,
-		end: fields[2].value,
-		endTime: " ",
-		eta: " ",
-		numRiders: fields[3].value,
-		start: fields[1].value,
-		time: date.getMonth() + "/" + date.getDay() + "/" + date.getFullYear() + " " + calculateETA(0),
-		waitTime: 1000,
-	});
-	clearFields(fields);
+	if (fields[0].value != "" && fields[1].value != "" && fields[2].value != "" && fields[3].value != "") {
+		var email = fields[0].value.replace(".", ",");
+		var pendingRidesRef = ref.child("PENDING RIDES");
+		var date = new Date();
+		pendingRidesRef.child(email).set({ 
+			email: email,
+			end: fields[2].value,
+			endTime: " ",
+			eta: " ",
+			numRiders: fields[3].value,
+			start: fields[1].value,
+			time: date.getMonth() + "/" + date.getDay() + "/" + date.getFullYear() + " " + calculateETA(0),
+			waitTime: 1000,
+		});
+		clearFields(fields);
+	} else {
+		alert("Please fill out all the fields when adding a ride.");
+	}
 }
 
 // Clears all the text fields for adding a ride.
@@ -149,19 +254,19 @@ function clearFields(fields) {
 // Parameters: ref - reference to the firebase database
 //             htmlItemsPending - array to hold all html items currently
 //								  being used by the pending rides
-function constructPendingRides(ref, htmlItemsPending) {
+function constructPendingRides(ref, htmlItemsPending, column) {
 	var pendingRidesRef = ref.child("PENDING RIDES");
 	pendingRidesRef.on("value", function(snapshot) { 
-		reset(htmlItemsPending);
+		reset(htmlItemsPending, column);
 		var output = "<h2>Pending Rides:</h2><br>";
 		snapshot.forEach(function(child) {
 			var email = child.child("email").val();
-			output = output + "Email: "+email.replace(",", ".") + "<br>" +
-			"Time: "+child.child("time").val() + "<br>" +
-			"Number of Riders: "+child.child("numRiders").val() + "<br>" +
-			"From: "+child.child("start").val() + "<br>" +
-			"To: "+child.child("end").val() + "<br>";
-			createTextAndButtons(output, email, pendingRidesRef, "pending", htmlItemsPending);
+			output = output + "<b>Email: </b>"+email.replace(",", ".") + "<br>" +
+			"<b>Time: </b>"+child.child("time").val() + "<br>" +
+			"<b>Number of Riders: </b>"+child.child("numRiders").val() + "<br>" +
+			"<b>From: </b>"+child.child("start").val() + "<br>" +
+			"<b>To: </b>"+child.child("end").val() + "<br>";
+			createTextAndButtons(output, email, pendingRidesRef, "pending", htmlItemsPending, column);
 			output = "";
 		});
 	});
@@ -172,22 +277,21 @@ function constructPendingRides(ref, htmlItemsPending) {
 // Parameters: ref - reference to the firebase database
 // 		       htmlItemsActive - array to hold all html items currently
 // 			  		 	 	     being used by the acitve rides
-function constructActiveRides(ref, htmlItemsActive) {
+function constructActiveRides(ref, htmlItemsActive, column) {
 	var activeRidesRef = ref.child("ACTIVE RIDES");
 	activeRidesRef.on("value", function(snapshot) {
-		reset(htmlItemsActive);
+		reset(htmlItemsActive, column);
 		var output = "<h2>Active Rides:</h2><br>";
 		snapshot.forEach(function(child) {
 			var email = child.child("email").val();
-			output = output + "Email: "+email.replace(",", ".") + "<br>" +
-			"Time: "+child.child("time").val() + "<br>" +
-			"Number of Riders: "+child.child("numRiders").val() + "<br>" +
-			"From: "+child.child("start").val() + "<br>" +
-			"To: "+child.child("end").val() + "<br>" +
-			"Current Wait Time: "+child.child("waitTime").val() + "<br>" +
-			"ETA: "+child.child("eta").val() + "<br>";
-			//"End Time: "+child.child("endTime").val() + "<br>";
-			createTextAndButtons(output, email, activeRidesRef, "active", htmlItemsActive);
+			output = output + "<b>Email: </b>"+email.replace(",", ".") + "<br>" +
+			"<b>Time: </b>"+child.child("time").val() + "<br>" +
+			"<b>Number of Riders: </b>"+child.child("numRiders").val() + "<br>" +
+			"<b>From: </b>"+child.child("start").val() + "<br>" +
+			"<b>To: </b>"+child.child("end").val() + "<br>" +
+			"<b>Current Wait Time: </b>"+child.child("waitTime").val() + "<br>" +
+			"<b>ETA: </b>"+child.child("eta").val() + "<br>";
+			createTextAndButtons(output, email, activeRidesRef, "active", htmlItemsActive, column);
 			output = "";
 		});
 	});
@@ -200,7 +304,7 @@ function constructActiveRides(ref, htmlItemsActive) {
 //			   type - string to determine if the ride is pending or active
 //			   htmlItems - array for holding html items currently being used
 // 						   by this current ride
-function createTextAndButtons(output, email, ref, type, htmlItems) {
+function createTextAndButtons(output, email, ref, type, htmlItems, column) {
 	var para = document.createElement("p");
 	var textField = document.createElement("INPUT");
 	var updateButton = document.createElement("BUTTON");
@@ -211,19 +315,16 @@ function createTextAndButtons(output, email, ref, type, htmlItems) {
 	updateButton.innerHTML = "Update Wait Time";
 	completeButton.innerHTML = "Complete Ride";
 	cancelButton.innerHTML = "Cancel Ride";
-	textField.addEventListener("keyup", function(event){
-		event.preventDefault();
-		if (event.keyCode === 13) { updateButton.click(); }
-	});
+	textField.addEventListener("keyup", function(event){ enterAction(event, updateButton) });
 	updateButton.addEventListener("click", function() { updateAction(email, ref, textField, completeButton) });
 	completeButton.addEventListener("click", function() { completeAction(email, ref) });
 	cancelButton.addEventListener("click", function() { cancelAction(email, ref, type) });
 	htmlItems.push(para, textField, updateButton, completeButton, cancelButton);
-	document.body.appendChild(para);
-	document.body.appendChild(textField);
-	document.body.appendChild(updateButton);
-	document.body.appendChild(completeButton);
-	document.body.appendChild(cancelButton);
+	column.appendChild(para);
+	column.appendChild(textField);
+	column.appendChild(updateButton);
+	column.appendChild(completeButton);
+	column.appendChild(cancelButton);
 	if (type === "pending") {
 		completeButton.disabled = true;
 	}
@@ -291,12 +392,13 @@ function calculateETA(waitTime) {
 function completeAction(email, ref) { 
 	var user = ref.child(email);
 	user.once("value", function(snapshot) {
-		user.update({"endTime" : calculateETA(0)});
-		var archived = firebase.database().ref().child("ARCHIVED RIDES");
-		archived.child(email).set({ //TODO: ADD TIME/DATE to end of the email
+		var endTime = calculateETA(0);
+		user.update({"endTime" : endTime});
+		var completed = firebase.database().ref().child("COMPLETED RIDES");
+		completed.child(email).set({
 			email: snapshot.val().email,
 			end: snapshot.val().end,
-			endTime: snapshot.val().endTime,
+			endTime: endTime,
 			eta: snapshot.val().eta,
 			numRiders: snapshot.val().numRiders,
 			start: snapshot.val().start,
@@ -346,9 +448,9 @@ function checkReorder(type) {
 
 // Removes all of the html items in the given array (htmlItems)
 // from the document and clears the array.
-function reset(htmlItems) {
+function reset(htmlItems, column) {
 	htmlItems.forEach(function(entry) {
-		document.body.removeChild(entry);
+		column.removeChild(entry);
 	});
 	htmlItems.length = 0;
 }
