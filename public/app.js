@@ -72,8 +72,8 @@ function buildText() {
 	title.innerHTML = "<h1>Aces Dispatcher App </h1><br>";
 	title.style.textAlign = "center";
 	var div = document.createElement("div");
-	var statusText = document.createElement("p");
-	statusText.innerHTML = "<h3>Status</h3>"
+	var statusText = document.createElement("b");
+	statusText.innerHTML = "Status: ";
 	div.style.textAlign = "center";
 	div.appendChild(statusText);
 	document.body.appendChild(div);
