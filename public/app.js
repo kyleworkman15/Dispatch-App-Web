@@ -170,6 +170,7 @@ function exportToCSV(data, type) {
 	let csvContent = "data:text/csv;charset=utf-8,Email,To,End Time,ETA,Number of Riders,From,Time,Wait Time,\r\n";
 	console.log(data);
 	data.forEach(function(rowArray) {
+		rowArray[0] = rowArray[0].replace(",", ".");
 		csvContent += rowArray.join(",") + "\r\n";
 	});
 	console.log(csvContent);
@@ -422,7 +423,7 @@ function cancelAction(email, ref, type) {
 		cancelled.child(email).set({ 
 			email: snapshot.val().email,
 			end: snapshot.val().end,
-			endTime: snapshot.val().endTime,
+			endTime: "Cancelled by Dispatcher",
 			eta: snapshot.val().eta,
 			numRiders: snapshot.val().numRiders,
 			start: snapshot.val().start,
