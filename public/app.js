@@ -193,7 +193,7 @@ function constructAddRide(ref) {
 	var title = document.createElement("p");
 	title.innerHTML = "<h2>Add a ride:</h2>";
 	div.appendChild(title);
-	var texts = ["Email: ", "From: ", "To: ", "Number of Riders: "];
+	var texts = ["Email: ", "Start: ", "End: ", "Number of Riders: "];
 	var fields = [];
 	var addRide = document.createElement("BUTTON");
 	texts.forEach(element => {
@@ -233,9 +233,9 @@ function addRideAction(ref, fields) {
 			eta: " ",
 			numRiders: fields[3].value,
 			start: fields[1].value,
-			time: date.getMonth() + "/" + date.getDay() + "/" + date.getFullYear() + " " + calculateETA(0),
-			waitTime: 1000,
-			timestamp: + new Date(),
+			time: (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + calculateETA(0),
+			timestamp: date.getTime(),
+			waitTime: 1000
 		});
 		clearFields(fields);
 	} else {
@@ -348,7 +348,7 @@ function updateAction(email, ref, textField, completeButton) {
 				var active = firebase.database().ref().child("ACTIVE RIDES");
 				var attributes = [snapshot.val().email, snapshot.val().end, 
 					snapshot.val().endTime, eta, snapshot.val().numRiders, 
-					snapshot.val().start, snapshot.val().time, waitTime];
+					snapshot.val().start, snapshot.val().time, snapshot.val().timestamp, waitTime];
 				user.remove();
 				completeButton.disabled = false;
 				active.child(email).set({ 
@@ -359,7 +359,8 @@ function updateAction(email, ref, textField, completeButton) {
 					numRiders: attributes[4],
 					start: attributes[5],
 					time: attributes[6],
-					waitTime: attributes[7],
+					timestamp: attributes[7],
+					waitTime: attributes[8],
 				});
 			} else {
 				var eta = calculateETA(waitTime);
@@ -381,8 +382,12 @@ function calculateETA(waitTime) {
 	if (minutes < 10) {
 		stringMinutes = "0" + minutes;
 	}
-	if (hours < 12) {
+	if (hours == 0) {
+		return 12 + ":" + stringMinutes + " AM";
+	} else if (hours < 12) {
 		return hours + ":" + stringMinutes + " AM";
+	} else if (hours == 12) {
+		return hours + ":" + stringMinutes + " PM";
 	} else {
 		return (hours - 12) + ":" + stringMinutes + " PM";
 	}
@@ -395,9 +400,10 @@ function completeAction(email, ref) {
 	var user = ref.child(email);
 	user.once("value", function(snapshot) {
 		var endTime = calculateETA(0);
+		var ts = snapshot.val().timestamp
 		user.update({"endTime" : endTime});
 		var completed = firebase.database().ref().child("COMPLETED RIDES");
-		completed.child(email).set({
+		completed.child(email + "_" + ts).set({
 			email: snapshot.val().email,
 			end: snapshot.val().end,
 			endTime: endTime,
@@ -405,6 +411,7 @@ function completeAction(email, ref) {
 			numRiders: snapshot.val().numRiders,
 			start: snapshot.val().start,
 			time: snapshot.val().time,
+			timestamp: ts,
 			waitTime: snapshot.val().waitTime,
 		});
 		user.remove();
@@ -418,9 +425,10 @@ function completeAction(email, ref) {
 function cancelAction(email, ref, type) { 
 	var user = ref.child(email);
 	user.once("value", function(snapshot) {
+		var ts = snapshot.val().timestamp
 		user.update({"endTime" : "Cancelled by Dispatcher"});
 		var cancelled = firebase.database().ref().child("CANCELLED RIDES");
-		cancelled.child(email).set({ 
+		cancelled.child(email + "_" + ts).set({ 
 			email: snapshot.val().email,
 			end: snapshot.val().end,
 			endTime: "Cancelled by Dispatcher",
@@ -428,6 +436,7 @@ function cancelAction(email, ref, type) {
 			numRiders: snapshot.val().numRiders,
 			start: snapshot.val().start,
 			time: snapshot.val().time,
+			timestamp: ts,
 			waitTime: snapshot.val().waitTime,
 		});
 		user.remove();
