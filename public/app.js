@@ -69,12 +69,13 @@ function removePreviousComponents() {
 function buildText() {
 	var title = document.createElement("p");
 	document.body.appendChild(title);
-	title.innerHTML = "<h1>Aces Dispatcher App </h1><br>";
-	title.style.textAlign = "center";
+	title.innerHTML = "<h1>Aces Dispatcher App</h1>";
+	title.style.textAlign = "left";
+	title.style.cssFloat = "left";
 	var div = document.createElement("div");
 	var statusText = document.createElement("b");
-	statusText.innerHTML = "Status: ";
-	div.style.textAlign = "center";
+	statusText.innerHTML = "<h3>Status: </h3>";
+	div.style.cssFloat = "right";
 	div.appendChild(statusText);
 	document.body.appendChild(div);
 	return div;
@@ -119,6 +120,7 @@ function constructExport(ref) {
 	div.style.textAlign = "center";
 	var finish = document.createElement("BUTTON");
 	finish.innerHTML = "Finish session and download spreadsheet";
+	finish.style.cssFloat = "center"
 	finish.addEventListener("click", function() { exportAction(ref) });
 	div.appendChild(document.createElement("p"));
 	div.appendChild(finish);
@@ -139,14 +141,14 @@ function exportAction(ref) {
 // 			   type - string to determine which type to construct new tree under
 function exportMove(ref, type) {
 	ref.once("value", function(snapshot) {
-		var archived = firebase.database().ref().child("ARCHIVED");
+		var archived = firebase.database().ref().child("ARCHIVED").child(type);
 		var data = new Array(snapshot.numChildren());
 		var index = 0;
 		snapshot.forEach(function(child) {
 			var values = child.val();
 			data[index] = new Array(values.email, values.start, values.end, values.numRiders, values.time, values.waitTime, values.eta, values.endTime);
 			console.log(data);
-			archived.child(type).child(data[index][0]).set({ 
+			archived.child(data[index][0] + "_" + values.timestamp).set({ 
 				email: data[index][0],
 				end: data[index][2], 
 				endTime: data[index][7],
@@ -156,9 +158,10 @@ function exportMove(ref, type) {
 				time: data[index][4],
 				waitTime: data[index][5],
 			});
-			ref.child(data[index][0]).remove();
+			//ref.child(data[index][0]).remove();
 			index++;
 		});
+		ref.remove();
 		exportToCSV(data, type);
 	});
 }
