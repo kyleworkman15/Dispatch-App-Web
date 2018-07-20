@@ -273,6 +273,9 @@ function clearFields(fields) {
 // Parameters: ref - reference to the firebase database
 //             htmlItemsPending - array to hold all html items currently
 //								  being used by the pending rides
+// 			   column - the div object to display the pending rides in
+//			   logs - the array of logs to be displayed
+//			   log - the div object to display the log
 function constructPendingRides(ref, htmlItemsPending, column, logs, log) {
 	var pendingRidesRef = ref.child("PENDING RIDES");
 	pendingRidesRef.orderByChild("timestamp").on("value", function(snapshot) { 
@@ -291,7 +294,7 @@ function constructPendingRides(ref, htmlItemsPending, column, logs, log) {
 				stringDate = (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + calculateETA(0)
 				logs.push("<span class=user>" + stringDate + ": " + email.replace(",", ".") + " - Cancelled by User</span>");
 				drawLogs(logs, log);
-			} else if (endTime == " ") {
+			} else {
 				var email = child.child("email").val();
 				output = output + "<b>Email: </b>"+email.replace(",", ".") + "<br>" +
 				"<b>Time: </b>"+child.child("time").val() + "<br>" +
@@ -300,12 +303,7 @@ function constructPendingRides(ref, htmlItemsPending, column, logs, log) {
 				"<b>To: </b>"+child.child("end").val() + "<br>";
 				createTextAndButtons(output, email, pendingRidesRef, "pending", htmlItemsPending, column);
 				output = "";
-			} else {
-				var date = new Date()
-				stringDate = (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + calculateETA(0)
-				logs.push(stringDate + ": " + email.replace(",", ".") + " - Completed");
-				drawLogs(logs, log);
-			}
+			} 
 		});
 	});
 }
@@ -315,6 +313,9 @@ function constructPendingRides(ref, htmlItemsPending, column, logs, log) {
 // Parameters: ref - reference to the firebase database
 // 		       htmlItemsActive - array to hold all html items currently
 // 			  		 	 	     being used by the acitve rides
+// 			   column - the div object to display the active rides in
+//			   logs - the array of logs to be displayed
+//			   log - the div object to display the log
 function constructActiveRides(ref, htmlItemsActive, column, logs, log) {
 	var activeRidesRef = ref.child("ACTIVE RIDES");
 	activeRidesRef.orderByChild("timestamp").on("value", function(snapshot) {
@@ -333,7 +334,12 @@ function constructActiveRides(ref, htmlItemsActive, column, logs, log) {
 				stringDate = (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + calculateETA(0)
 				logs.push("<span class=user>" + stringDate + ": " + email.replace(",", ".") + " - Cancelled by User</span>");
 				drawLogs(logs, log);
-			} else if (endTime == " ") {
+			} else if (endTime.includes("M")) {
+				var date = new Date()
+				stringDate = (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + calculateETA(0)
+				logs.push(stringDate + ": " + email.replace(",", ".") + " - Completed");
+				drawLogs(logs, log);
+			} else {
 				output = output + "<b>Email: </b>"+email.replace(",", ".") + "<br>" +
 				"<b>Time: </b>"+child.child("time").val() + "<br>" +
 				"<b>Number of Riders: </b>"+child.child("numRiders").val() + "<br>" +
@@ -343,16 +349,14 @@ function constructActiveRides(ref, htmlItemsActive, column, logs, log) {
 				"<b>ETA: </b>"+child.child("eta").val() + "<br>";
 				createTextAndButtons(output, email, activeRidesRef, "active", htmlItemsActive, column);
 				output = "";
-			} else {
-				var date = new Date()
-				stringDate = (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + calculateETA(0)
-				logs.push(stringDate + ": " + email.replace(",", ".") + " - Completed");
-				drawLogs(logs, log);
-			}
+			} 
 		});
 	});
 }
 
+// Creates the log
+// Parameters: logs - the array of logs to be displayed
+//			   column - the div object to be displayed in
 function drawLogs(logs, column) {
 	while(column.firstChild) {
 		column.removeChild(column.firstChild);
