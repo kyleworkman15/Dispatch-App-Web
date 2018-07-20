@@ -23,7 +23,7 @@ function googleLogin() {
 // Check that the user is a dispatcher.
 function afterLogin(user) {
 	const email = user.email;
-	if (email === "kyleworkman15@augustana.edu" || email === "csc490teama@augustana.edu") {
+	if (email === "kyleworkman15@augustana.edu" || email === "csc490teama@augustana.edu" || email === "acesdispatcher@augustana.edu") {
 		correctLogin();
 	} else {
 		alert("Sorry, you must be a dispatcher.");
