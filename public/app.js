@@ -39,6 +39,7 @@ function correctLogin() {
 
 	var htmlItemsPending = [];
 	var htmlItemsActive = [];
+	var logs = [];
 
 	constructStatus(ref, div);
 	constructExport(ref);
@@ -48,15 +49,18 @@ function correctLogin() {
 	var row = document.createElement("div");
 	row.setAttribute("class", "row");
 	var left = document.createElement("div");
-	left.setAttribute("class", "column");
+	left.setAttribute("class", "column1");
 	var right = document.createElement("div");
-	right.setAttribute("class", "column");
+	right.setAttribute("class", "column1");
+	var log = document.createElement("div");
+	log.setAttribute("class", "column1");
 	row.appendChild(left);
 	row.appendChild(right);
+	row.appendChild(log);
 	document.body.appendChild(row);
 
-	constructPendingRides(ref, htmlItemsPending, left);
-	constructActiveRides(ref, htmlItemsActive, right);
+	constructPendingRides(ref, htmlItemsPending, left, logs, log);
+	constructActiveRides(ref, htmlItemsActive, right, logs, log);
 }
 
 // Removes components from the login screen.
@@ -269,20 +273,39 @@ function clearFields(fields) {
 // Parameters: ref - reference to the firebase database
 //             htmlItemsPending - array to hold all html items currently
 //								  being used by the pending rides
-function constructPendingRides(ref, htmlItemsPending, column) {
+function constructPendingRides(ref, htmlItemsPending, column, logs, log) {
 	var pendingRidesRef = ref.child("PENDING RIDES");
 	pendingRidesRef.orderByChild("timestamp").on("value", function(snapshot) { 
 		reset(htmlItemsPending, column);
 		var output = "<h2>Pending Rides:</h2><br>";
 		snapshot.forEach(function(child) {
 			var email = child.child("email").val();
-			output = output + "<b>Email: </b>"+email.replace(",", ".") + "<br>" +
-			"<b>Time: </b>"+child.child("time").val() + "<br>" +
-			"<b>Number of Riders: </b>"+child.child("numRiders").val() + "<br>" +
-			"<b>From: </b>"+child.child("start").val() + "<br>" +
-			"<b>To: </b>"+child.child("end").val() + "<br>";
-			createTextAndButtons(output, email, pendingRidesRef, "pending", htmlItemsPending, column);
-			output = "";
+			var endTime = child.child("endTime").val();
+			if (endTime == "Cancelled by Dispatcher") {
+				var date = new Date()
+				stringDate = (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + calculateETA(0)
+				logs.push(stringDate + ": " + email.replace(",", ".") + " - Cancelled by Dispatcher");
+				drawLogs(logs, log);
+			} else if (endTime == "Cancelled by User") {
+				var date = new Date()
+				stringDate = (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + calculateETA(0)
+				logs.push("<span class=user>" + stringDate + ": " + email.replace(",", ".") + " - Cancelled by User</span>");
+				drawLogs(logs, log);
+			} else if (endTime == " ") {
+				var email = child.child("email").val();
+				output = output + "<b>Email: </b>"+email.replace(",", ".") + "<br>" +
+				"<b>Time: </b>"+child.child("time").val() + "<br>" +
+				"<b>Number of Riders: </b>"+child.child("numRiders").val() + "<br>" +
+				"<b>From: </b>"+child.child("start").val() + "<br>" +
+				"<b>To: </b>"+child.child("end").val() + "<br>";
+				createTextAndButtons(output, email, pendingRidesRef, "pending", htmlItemsPending, column);
+				output = "";
+			} else {
+				var date = new Date()
+				stringDate = (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + calculateETA(0)
+				logs.push(stringDate + ": " + email.replace(",", ".") + " - Completed");
+				drawLogs(logs, log);
+			}
 		});
 	});
 }
@@ -292,24 +315,55 @@ function constructPendingRides(ref, htmlItemsPending, column) {
 // Parameters: ref - reference to the firebase database
 // 		       htmlItemsActive - array to hold all html items currently
 // 			  		 	 	     being used by the acitve rides
-function constructActiveRides(ref, htmlItemsActive, column) {
+function constructActiveRides(ref, htmlItemsActive, column, logs, log) {
 	var activeRidesRef = ref.child("ACTIVE RIDES");
 	activeRidesRef.orderByChild("timestamp").on("value", function(snapshot) {
 		reset(htmlItemsActive, column);
 		var output = "<h2>Active Rides:</h2><br>";
 		snapshot.forEach(function(child) {
 			var email = child.child("email").val();
-			output = output + "<b>Email: </b>"+email.replace(",", ".") + "<br>" +
-			"<b>Time: </b>"+child.child("time").val() + "<br>" +
-			"<b>Number of Riders: </b>"+child.child("numRiders").val() + "<br>" +
-			"<b>From: </b>"+child.child("start").val() + "<br>" +
-			"<b>To: </b>"+child.child("end").val() + "<br>" +
-			"<b>Current Wait Time: </b>"+child.child("waitTime").val() + "<br>" +
-			"<b>ETA: </b>"+child.child("eta").val() + "<br>";
-			createTextAndButtons(output, email, activeRidesRef, "active", htmlItemsActive, column);
-			output = "";
+			var endTime = child.child("endTime").val();
+			if (endTime == "Cancelled by Dispatcher") {
+				var date = new Date()
+				stringDate = (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + calculateETA(0)
+				logs.push(stringDate + ": " + email.replace(",", ".") + " - Cancelled by Dispatcher");
+				drawLogs(logs, log);
+			} else if (endTime == "Cancelled by User") {
+				var date = new Date()
+				stringDate = (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + calculateETA(0)
+				logs.push("<span class=user>" + stringDate + ": " + email.replace(",", ".") + " - Cancelled by User</span>");
+				drawLogs(logs, log);
+			} else if (endTime == " ") {
+				output = output + "<b>Email: </b>"+email.replace(",", ".") + "<br>" +
+				"<b>Time: </b>"+child.child("time").val() + "<br>" +
+				"<b>Number of Riders: </b>"+child.child("numRiders").val() + "<br>" +
+				"<b>From: </b>"+child.child("start").val() + "<br>" +
+				"<b>To: </b>"+child.child("end").val() + "<br>" +
+				"<b>Current Wait Time: </b>"+child.child("waitTime").val() + "<br>" +
+				"<b>ETA: </b>"+child.child("eta").val() + "<br>";
+				createTextAndButtons(output, email, activeRidesRef, "active", htmlItemsActive, column);
+				output = "";
+			} else {
+				var date = new Date()
+				stringDate = (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + calculateETA(0)
+				logs.push(stringDate + ": " + email.replace(",", ".") + " - Completed");
+				drawLogs(logs, log);
+			}
 		});
 	});
+}
+
+function drawLogs(logs, column) {
+	while(column.firstChild) {
+		column.removeChild(column.firstChild);
+	}
+	var output = "<h2>Log:</h2></br>";
+	for (var i = logs.length - 1; i >= 0; --i) {
+		output = output + logs[i] + "</br>";
+	}
+	var para = document.createElement("p");
+	para.innerHTML = output;
+	column.appendChild(para);
 }
 
 // Creates all of the text, text fields, and buttons needed for a single ride. 
