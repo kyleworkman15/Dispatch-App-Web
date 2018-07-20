@@ -106,9 +106,19 @@ function toggleStatus(ref) {
 	var flagRef = ref.child("STATUS");
 	flagRef.once("value", function(snapshot) {
 		if (snapshot.val().FLAG === "ON") {
+			var message = prompt("Custom status message (leave blank or press cancel for no custom status message):", "");
+			if (message === null || message === "") {
+				message = "";
+			} else {
+				var date = new Date()
+				stringDate = (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + calculateETA(0)
+				message = stringDate + "\n" + message
+			}
+			flagRef.update({"MESSAGE" : message});
 			flagRef.update({"FLAG" : "OFF"});
 		} else {
 			flagRef.update({"FLAG" : "ON"});
+			flagRef.update({"MESSAGE" : ""});
 		}
 	});
 }
@@ -426,25 +436,29 @@ function completeAction(email, ref) {
 // 			   ref - reference to the firebase tree (pending or active)
 // 			   type - string to determine if the ride is pending or active
 function cancelAction(email, ref, type) { 
-	var user = ref.child(email);
-	user.once("value", function(snapshot) {
-		var ts = snapshot.val().timestamp
-		user.update({"endTime" : "Cancelled by Dispatcher"});
-		var cancelled = firebase.database().ref().child("CANCELLED RIDES");
-		cancelled.child(email + "_" + ts).set({ 
-			email: snapshot.val().email,
-			end: snapshot.val().end,
-			endTime: "Cancelled by Dispatcher",
-			eta: snapshot.val().eta,
-			numRiders: snapshot.val().numRiders,
-			start: snapshot.val().start,
-			time: snapshot.val().time,
-			timestamp: ts,
-			waitTime: snapshot.val().waitTime,
+	if (confirm('Are you sure you want to cancel this ride?')) {
+		var user = ref.child(email);
+		user.once("value", function(snapshot) {
+			var ts = snapshot.val().timestamp
+			user.update({"endTime" : "Cancelled by Dispatcher"});
+			var cancelled = firebase.database().ref().child("CANCELLED RIDES");
+			cancelled.child(email + "_" + ts).set({ 
+				email: snapshot.val().email,
+				end: snapshot.val().end,
+				endTime: "Cancelled by Dispatcher",
+				eta: snapshot.val().eta,
+				numRiders: snapshot.val().numRiders,
+				start: snapshot.val().start,
+				time: snapshot.val().time,
+				timestamp: ts,
+				waitTime: snapshot.val().waitTime,
+			});
+			user.remove();
+			checkReorder(type);
 		});
-		user.remove();
-		checkReorder(type);
-	});
+	} else {
+		// Do nothing
+	}
 }
 
 // NO LONGER NEEDED BECAUSE OF COLUMNS
