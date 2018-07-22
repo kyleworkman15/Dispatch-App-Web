@@ -349,6 +349,11 @@ function constructActiveRides(ref, htmlItemsActive, column, logs, log) {
 				"<b>ETA: </b>"+child.child("eta").val() + "<br>";
 				createTextAndButtons(output, email, activeRidesRef, "active", htmlItemsActive, column);
 				output = "";
+				var notify = document.createElement("BUTTON");
+				notify.innerHTML = "Notify";
+				notify.addEventListener("click", function() { notifyAction(ref, email, notify) });
+				column.appendChild(notify);
+				htmlItemsActive.push(notify);
 			} 
 		});
 	});
@@ -404,6 +409,12 @@ function createTextAndButtons(output, email, ref, type, htmlItems, column) {
 	//checkReorder(type);
 }
 
+function notifyAction(ref, email, notify) {
+	var user = ref.child("ACTIVE RIDES").child(email);
+	user.child("notify").set({"email" : email});
+	//notify.disabled = true;
+}
+
 // Method for handeling the update action from the update button.
 // Parameters: email - current email of the ride
 //			   ref - reference to the firebase tree (pending or active)
@@ -419,7 +430,7 @@ function updateAction(email, ref, textField, completeButton) {
 				var active = firebase.database().ref().child("ACTIVE RIDES");
 				var attributes = [snapshot.val().email, snapshot.val().end, 
 					snapshot.val().endTime, eta, snapshot.val().numRiders, 
-					snapshot.val().start, snapshot.val().time, snapshot.val().timestamp, waitTime];
+					snapshot.val().start, snapshot.val().time, snapshot.val().timestamp, waitTime, snapshot.val().token];
 				user.remove();
 				completeButton.disabled = false;
 				active.child(email).set({ 
@@ -432,6 +443,7 @@ function updateAction(email, ref, textField, completeButton) {
 					time: attributes[6],
 					timestamp: attributes[7],
 					waitTime: attributes[8],
+					token: attributes[9],
 				});
 			} else {
 				var eta = calculateETA(waitTime);
