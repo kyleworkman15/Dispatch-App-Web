@@ -421,31 +421,37 @@ function updateAction(email, ref, textField, completeButton) {
 		var nowDate = new Date();
 		var etaDate = new Date(nowDate.getTime() + (60000 * waitTime));
 		user.once("value", function(snapshot) {
-			if (snapshot.val().waitTime == "1000") {
-				var eta = calculateETA(waitTime);
-				var active = firebase.database().ref().child("ACTIVE RIDES");
-				var attributes = [snapshot.val().email, snapshot.val().end, 
-					snapshot.val().endTime, eta, snapshot.val().numRiders, 
-					snapshot.val().start, snapshot.val().time, snapshot.val().timestamp, waitTime, snapshot.val().token];
-				user.remove();
-				completeButton.disabled = false;
-				active.child(email).set({ 
-					email: attributes[0],
-					end: attributes[1],
-					endTime: attributes[2],
-					eta: attributes[3],
-					numRiders: attributes[4],
-					start: attributes[5],
-					time: attributes[6],
-					timestamp: attributes[7],
-					waitTime: attributes[8],
-					token: attributes[9],
-					etaTimestamp: etaDate.getTime(),
-				});
-			} else {
-				var eta = calculateETA(waitTime);
-				user.update({"waitTime" : waitTime, "eta" : eta, "etaTimestamp" : etaDate.getTime()});
-			}
+			var email = snapshot.val().email;
+			var ts = snapshot.val().timestamp;
+			firebase.database().ref().child("CANCELLED RIDES").child(email + "_" + ts).once("value", function(snap) { 
+				if (!snap.hasChildren()) { // for checking if the ride cancelled already (duplicate ride bug)
+					if (snapshot.val().waitTime == "1000") {
+						var eta = calculateETA(waitTime);
+						var active = firebase.database().ref().child("ACTIVE RIDES");
+						var attributes = [email, snapshot.val().end, 
+							snapshot.val().endTime, eta, snapshot.val().numRiders, 
+							snapshot.val().start, snapshot.val().time, ts, waitTime, snapshot.val().token];
+						user.remove();
+						completeButton.disabled = false;
+						active.child(email).set({ 
+							email: attributes[0],
+							end: attributes[1],
+							endTime: attributes[2],
+							eta: attributes[3],
+							numRiders: attributes[4],
+							start: attributes[5],
+							time: attributes[6],
+							timestamp: attributes[7],
+							waitTime: attributes[8],
+							token: attributes[9],
+							etaTimestamp: etaDate.getTime(),
+						});
+					} else {
+						var eta = calculateETA(waitTime);
+						user.update({"waitTime" : waitTime, "eta" : eta, "etaTimestamp" : etaDate.getTime()});
+					}
+				}
+			});
 		});
 	}
 }
