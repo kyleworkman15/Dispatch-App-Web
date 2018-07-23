@@ -45,7 +45,7 @@ function correctLogin() {
 	constructExport(ref);
 	constructAddRide(ref);
 
-	// construct the two columns
+	// construct the three columns
 	var row = document.createElement("div");
 	row.setAttribute("class", "row");
 	var left = document.createElement("div");
@@ -252,7 +252,8 @@ function addRideAction(ref, fields) {
 			start: fields[1].value,
 			time: (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + calculateETA(0),
 			timestamp: date.getTime(),
-			waitTime: 1000
+			waitTime: 1000,
+			token: " ",
 		});
 		clearFields(fields);
 	} else {
@@ -280,19 +281,15 @@ function constructPendingRides(ref, htmlItemsPending, column, logs, log) {
 	var pendingRidesRef = ref.child("PENDING RIDES");
 	pendingRidesRef.orderByChild("timestamp").on("value", function(snapshot) { 
 		reset(htmlItemsPending, column);
-		var output = "<h2>Pending Rides:</h2><br>";
+		var output = "<h2>Pending Rides: (Ordered by Arrival)</h2><br>";
 		snapshot.forEach(function(child) {
 			var email = child.child("email").val();
 			var endTime = child.child("endTime").val();
 			if (endTime == "Cancelled by Dispatcher") {
-				var date = new Date()
-				stringDate = (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + calculateETA(0)
-				logs.push(stringDate + ": " + email.replace(",", ".") + " - Cancelled by Dispatcher");
+				logs.push("- " + calculateETA(0) + ": " + email.replace(",", ".") + " - Cancelled by Dispatcher");
 				drawLogs(logs, log);
 			} else if (endTime == "Cancelled by User") {
-				var date = new Date()
-				stringDate = (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + calculateETA(0)
-				logs.push("<span class=user>" + stringDate + ": " + email.replace(",", ".") + " - Cancelled by User</span>");
+				logs.push("<span class=user>" + "- " + calculateETA(0) +  ": " + email.replace(",", ".") + " - Cancelled by User</span>");
 				drawLogs(logs, log);
 			} else {
 				var email = child.child("email").val();
@@ -318,26 +315,20 @@ function constructPendingRides(ref, htmlItemsPending, column, logs, log) {
 //			   log - the div object to display the log
 function constructActiveRides(ref, htmlItemsActive, column, logs, log) {
 	var activeRidesRef = ref.child("ACTIVE RIDES");
-	activeRidesRef.orderByChild("timestamp").on("value", function(snapshot) {
+	activeRidesRef.orderByChild("etaTimestamp").on("value", function(snapshot) {
 		reset(htmlItemsActive, column);
-		var output = "<h2>Active Rides:</h2><br>";
+		var output = "<h2>Active Rides: (Ordered by ETA)</h2><br>";
 		snapshot.forEach(function(child) {
 			var email = child.child("email").val();
 			var endTime = child.child("endTime").val();
 			if (endTime == "Cancelled by Dispatcher") {
-				var date = new Date()
-				stringDate = (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + calculateETA(0)
-				logs.push(stringDate + ": " + email.replace(",", ".") + " - Cancelled by Dispatcher");
+				logs.push("- " + calculateETA(0) + ": " + email.replace(",", ".") + " - Cancelled by Dispatcher");
 				drawLogs(logs, log);
 			} else if (endTime == "Cancelled by User") {
-				var date = new Date()
-				stringDate = (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + calculateETA(0)
-				logs.push("<span class=user>" + stringDate + ": " + email.replace(",", ".") + " - Cancelled by User</span>");
+				logs.push("<span class=user>" + "- " + calculateETA(0) + ": " + email.replace(",", ".") + " - Cancelled by User</span>");
 				drawLogs(logs, log);
 			} else if (endTime.includes("M")) {
-				var date = new Date()
-				stringDate = (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + calculateETA(0)
-				logs.push(stringDate + ": " + email.replace(",", ".") + " - Completed");
+				logs.push("- " + calculateETA(0) + ": " + email.replace(",", ".") + " - Completed");
 				drawLogs(logs, log);
 			} else {
 				output = output + "<b>Email: </b>"+email.replace(",", ".") + "<br>" +
@@ -351,7 +342,7 @@ function constructActiveRides(ref, htmlItemsActive, column, logs, log) {
 				output = "";
 				var notify = document.createElement("BUTTON");
 				notify.innerHTML = "Notify";
-				notify.addEventListener("click", function() { notifyAction(ref, email, notify) });
+				notify.addEventListener("click", function() { notifyAction(this, ref, email) });
 				column.appendChild(notify);
 				htmlItemsActive.push(notify);
 			} 
@@ -409,10 +400,13 @@ function createTextAndButtons(output, email, ref, type, htmlItems, column) {
 	//checkReorder(type);
 }
 
-function notifyAction(ref, email, notify) {
+// Notifies the user that their ride has arrived
+// Parameters: ref - reference to the firebase tree (root)
+//			   email - current email of the ride
+function notifyAction(btn, ref, email) {
+	btn.disabled = true;
 	var user = ref.child("ACTIVE RIDES").child(email);
 	user.child("notify").set({"email" : email});
-	//notify.disabled = true;
 }
 
 // Method for handeling the update action from the update button.
@@ -424,6 +418,8 @@ function updateAction(email, ref, textField, completeButton) {
 	var waitTime = textField.value;
 	if (waitTime !== "") {
 		var user = ref.child(email);
+		var nowDate = new Date();
+		var etaDate = new Date(nowDate.getTime() + (60000 * waitTime));
 		user.once("value", function(snapshot) {
 			if (snapshot.val().waitTime == "1000") {
 				var eta = calculateETA(waitTime);
@@ -444,10 +440,11 @@ function updateAction(email, ref, textField, completeButton) {
 					timestamp: attributes[7],
 					waitTime: attributes[8],
 					token: attributes[9],
+					etaTimestamp: etaDate.getTime(),
 				});
 			} else {
 				var eta = calculateETA(waitTime);
-				user.update({"waitTime" : waitTime, "eta" : eta});
+				user.update({"waitTime" : waitTime, "eta" : eta, "etaTimestamp" : etaDate.getTime()});
 			}
 		});
 	}
