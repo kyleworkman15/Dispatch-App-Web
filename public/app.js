@@ -407,6 +407,7 @@ function notifyAction(btn, ref, email) {
 	var user = ref.child("ACTIVE RIDES").child(email);
 	user.child("notify").set({"email" : email});
 	user.child("notify").remove();
+	user.update({"eta" : "Here!"})
 }
 
 // Method for handeling the update action from the update button.
