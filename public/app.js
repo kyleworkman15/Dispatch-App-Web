@@ -404,9 +404,9 @@ function createTextAndButtons(output, email, ref, type, htmlItems, column) {
 // Parameters: ref - reference to the firebase tree (root)
 //			   email - current email of the ride
 function notifyAction(btn, ref, email) {
-	btn.disabled = true;
 	var user = ref.child("ACTIVE RIDES").child(email);
 	user.child("notify").set({"email" : email});
+	user.child("notify").remove();
 }
 
 // Method for handeling the update action from the update button.
