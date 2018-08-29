@@ -1,0 +1,28 @@
+[debug] [2018-08-29T20:29:51.344Z] ----------------------------------------------------------------------
+[debug] [2018-08-29T20:29:51.347Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\kyleworkman15\AppData\Roaming\npm\node_modules\firebase-tools\bin\firebase serve
+[debug] [2018-08-29T20:29:51.347Z] CLI Version:   4.2.1
+[debug] [2018-08-29T20:29:51.347Z] Platform:      win32
+[debug] [2018-08-29T20:29:51.347Z] Node Version:  v8.11.4
+[debug] [2018-08-29T20:29:51.348Z] Time:          Wed Aug 29 2018 15:29:51 GMT-0500 (Central Daylight Time)
+[debug] [2018-08-29T20:29:51.348Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2018-08-29T20:29:51.359Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2018-08-29T20:29:51.359Z] > authorizing via signed-in user
+[debug] [2018-08-29T20:29:51.361Z] > refreshing access token with scopes: ["email","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","openid"]
+[debug] [2018-08-29T20:29:51.361Z] >>> HTTP REQUEST POST https://www.googleapis.com/oauth2/v3/token  
+
+[debug] [2018-08-29T20:29:51.592Z] <<< HTTP RESPONSE 200
+[debug] [2018-08-29T20:29:51.597Z] >>> HTTP REQUEST GET https://admin.firebase.com/v1/projects/augustana-aces  
+ 
+[debug] [2018-08-29T20:29:51.975Z] <<< HTTP RESPONSE 200
+[debug] [2018-08-29T20:29:51.977Z] >>> HTTP REQUEST GET https://cloudresourcemanager.googleapis.com/v1/projects/augustana-aces  
+ 
+[debug] [2018-08-29T20:29:52.232Z] <<< HTTP RESPONSE 200
+[info] 
+[info] === Serving from 'C:\Users\kyleworkman15\Documents\GitHub\Dispatch-App-Web'...
+[info] 
+[debug] [2018-08-29T20:29:52.237Z] >>> HTTP REQUEST GET https://mobilesdk-pa.googleapis.com/v1/projects/691410651327/clients/_:getWebAppConfig  
+ 
+[debug] [2018-08-29T20:29:52.596Z] <<< HTTP RESPONSE 200
+[info] i  hosting[augustana-aces]: Serving hosting files from: public
+[info] +  hosting[augustana-aces]: Local server: http://localhost:5000

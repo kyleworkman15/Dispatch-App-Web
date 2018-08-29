@@ -381,10 +381,11 @@ function createTextAndButtons(output, email, ref, type, htmlItems, column) {
 	var completeButton = document.createElement("BUTTON");
 	var cancelButton = document.createElement("BUTTON");
 	para.innerHTML = output;
+	textField.setAttribute("size", "1");
 	textField.setAttribute("type", "text");
 	updateButton.innerHTML = "Update Wait Time";
-	completeButton.innerHTML = "Complete Ride";
-	cancelButton.innerHTML = "Cancel Ride";
+	completeButton.innerHTML = "Complete";
+	cancelButton.innerHTML = "Cancel";
 	textField.addEventListener("keyup", function(event){ enterAction(event, updateButton) });
 	updateButton.addEventListener("click", function() { updateAction(email, ref, textField, completeButton) });
 	completeButton.addEventListener("click", function() { completeAction(email, ref) });
@@ -405,10 +406,41 @@ function createTextAndButtons(output, email, ref, type, htmlItems, column) {
 // Parameters: ref - reference to the firebase tree (root)
 //			   email - current email of the ride
 function notifyAction(btn, ref, email) {
+	createAlertWithDropDown();
 	var user = ref.child("ACTIVE RIDES").child(email);
 	user.child("notify").set({"email" : email});
 	user.child("notify").remove();
 	user.update({"eta" : "Here!"})
+}
+
+// DEVELOPMENT
+function createAlertWithDropDown() {
+	$("#dialog").dialog({
+
+		autoOpen: true,
+		buttons: {
+	
+			Yes: function() {
+	
+				alert("Yes!");
+				$(this).dialog("close");
+			},
+			No: function() {
+	
+				alert("No!");
+				$(this).dialog("close");
+	
+			},
+			Maybe: function() {
+	
+				alert("Maybe!");
+				$(this).dialog("close");
+			}
+	
+		},
+		width: "400px"
+	
+	});
 }
 
 // Method for handeling the update action from the update button.
