@@ -67,6 +67,7 @@ function correctLogin() {
 function removePreviousComponents() {
 	document.getElementById("div").remove();
 	document.getElementById("button").remove();
+	document.getElementById("link").remove();
 }
 
 // Adds the text for the title and status indicator.
