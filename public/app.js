@@ -403,7 +403,7 @@ function createTextAndButtons(output, email, ref, type, htmlItems, column) {
 // Parameters: ref - reference to the firebase tree (root)
 //			   email - current email of the ride
 function notifyAction(btn, ref, email) {
-	createAlertWithDropDown();
+	createAlertWithDropDown(btn);
 	var user = ref.child("ACTIVE RIDES").child(email);
 	user.child("notify").set({"email" : email});
 	user.child("notify").remove();
@@ -411,8 +411,36 @@ function notifyAction(btn, ref, email) {
 }
 
 // DEVELOPMENT
-function createAlertWithDropDown() {
+function createAlertWithDropDown(btn) {
 	//Custom pop up
+	var stringvar = '<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-header"><button type="button" class="close" data-dismiss="modal" aria-hidden="true">×</button><h3 id="myModalLabel">Modal header</h3></div><div class="modal-body"><select><option>test</option><option>test</option><option>test</option><option>test</option><option>test</option></select></div><div class="modal-footer"><button class="btn" data-dismiss="modal" aria-hidden="true">Close</button><button class="btn btn-primary">Save changes</button></div></div></div></div>';
+	
+	var popUpList = $(stringvar);
+	$(popUpList).dialog({
+			title: 'Test',
+			draggable: false,
+			resizable: false,
+			closeOnEscape: false,
+			modal: true,
+			autoOpen: false
+	});
+	$(popUpList).dialog('open');
+	// var div = document.createElement("div");
+	// div.setAttribute("id", "dialog");
+	// div.setAttribute("title", "TEST");
+	// document.body.appendChild(div);
+	// $(document).ready(function () {
+	// 	$('#dialog').dialog({
+	// 		title: 'Test',
+	// 		draggable: false,
+	// 		resizable: false,
+	// 		closeOnEscape: false,
+	// 		modal: true,
+	// 		autoOpen: false
+	// 	});
+	// 	$('#dialog').dialog('open');
+	// });
+
 }
 
 // Method for handeling the update action from the update button.
