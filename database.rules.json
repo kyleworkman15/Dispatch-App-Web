@@ -4,30 +4,30 @@
      ".write": "auth.uid == root.child('ADMIN').child('kyle').val() || auth.uid == root.child('ADMIN').child('dispatch').val()",
      "PENDING RIDES": {
        "$email": {
-         ".read": "auth.token.email == $email.replace(',', '.')",
-         ".write": "auth.token.email == $email.replace(',', '.')"
+         ".read": "auth.token.email.contains('@augustana.edu') && auth.token.email == $email.replace(',', '.')",
+         ".write": "auth.token.email.contains('@augustana.edu') && auth.token.email == $email.replace(',', '.')"
        }
      },
      "ACTIVE RIDES": {
        "$email": {
-         ".read": "auth.token.email == $email.replace(',', '.')",
-         ".write": "auth.token.email == $email.replace(',', '.')"
+         ".read": "auth.token.email.contains('@augustana.edu') && auth.token.email == $email.replace(',', '.')",
+         ".write": "auth.token.email.contains('@augustana.edu') && auth.token.email == $email.replace(',', '.')"
        }
      },
      "CANCELLED RIDES": {
          "$email": {
-           ".read": "$email.replace(',', '.').contains(auth.token.email)",
-           ".write": "$email.replace(',', '.').contains(auth.token.email)"
+           ".read": "auth.token.email.contains('@augustana.edu') && $email.replace(',', '.').contains(auth.token.email)",
+           ".write": "auth.token.email.contains('@augustana.edu') && $email.replace(',', '.').contains(auth.token.email)"
          }
      },
      "COMPLETED RIDES": {
          "$email": {
-           ".read": "$email.replace(',', '.').contains(auth.token.email)",
-           ".write": "$email.replace(',', '.').contains(auth.token.email)"
+           ".read": "auth.token.email.contains('@augustana.edu') && $email.replace(',', '.').contains(auth.token.email)",
+           ".write": "auth.token.email.contains('@augustana.edu') && $email.replace(',', '.').contains(auth.token.email)"
          }
      },
       "STATUS": {
-        ".read": "auth != null"
+        ".read": "auth.token.email.contains('@augustana.edu')"
       }
    }
 }
