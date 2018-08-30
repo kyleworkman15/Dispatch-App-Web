@@ -162,7 +162,6 @@ function exportMove(ref, type) {
 		snapshot.forEach(function(child) {
 			var values = child.val();
 			data[index] = new Array(values.email, values.start, values.end, values.numRiders, values.time, values.waitTime, values.eta, values.endTime);
-			console.log(data);
 			archived.child(data[index][0] + "_" + values.timestamp).set({ 
 				email: data[index][0],
 				end: data[index][2], 
@@ -186,12 +185,10 @@ function exportMove(ref, type) {
 //     	 	   type - string to determine which type of rides (completed or cancelled)
 function exportToCSV(data, type) {
 	let csvContent = "data:text/csv;charset=utf-8,Email,From,To,Number of Riders,Time,Wait Time,ETA,End Time\r\n";
-	console.log(data);
 	data.forEach(function(rowArray) {
 		rowArray[0] = rowArray[0].replace(",", ".");
 		csvContent += rowArray.join(",") + "\r\n";
 	});
-	console.log(csvContent);
 	var encodedUri = encodeURI(csvContent);
 	var link = document.createElement("a");
 	link.setAttribute("href", encodedUri);
@@ -415,32 +412,7 @@ function notifyAction(btn, ref, email) {
 
 // DEVELOPMENT
 function createAlertWithDropDown() {
-	$("#dialog").dialog({
-
-		autoOpen: true,
-		buttons: {
-	
-			Yes: function() {
-	
-				alert("Yes!");
-				$(this).dialog("close");
-			},
-			No: function() {
-	
-				alert("No!");
-				$(this).dialog("close");
-	
-			},
-			Maybe: function() {
-	
-				alert("Maybe!");
-				$(this).dialog("close");
-			}
-	
-		},
-		width: "400px"
-	
-	});
+	//Custom pop up
 }
 
 // Method for handeling the update action from the update button.
