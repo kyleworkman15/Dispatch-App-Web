@@ -1,12 +1,28 @@
 {
    "rules": {
-       // only authenticated users can read or write to my Firebase
-       ".read": "auth !== null",
-       ".write": "auth !== null", 
-         "STATUS":{
-           "FLAG":{
-             ".read": "true"
-           }
-         }
+     ".write": "auth.uid == root.child('ADMIN').child('kyle').val() || auth.uid == root.child('ADMIN').child('dispatch').val()",
+     "PENDING RIDES": {
+       ".read": "auth != null",
+       "$email": {
+         ".write": "auth.token.email == $email.replace(',', '.')"
+       }
+     },
+     "ACTIVE RIDES": {
+       ".read": "auth != null",
+       "$email": {
+         ".write": "auth.token.email == $email.replace(',', '.')"
+       }
+     },
+     "CANCELLED RIDES": {
+         ".read": "auth != null",
+         ".write": "auth != null"
+     },
+     "COMPLETED RIDES": {
+         ".read": "auth != null",
+         ".write": "auth != null"
+     },
+      "STATUS": {
+        ".read": "auth != null"
+      }
    }
 }
