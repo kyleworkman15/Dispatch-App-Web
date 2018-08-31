@@ -4,6 +4,9 @@
 // Description: Augustana Aces Dispatcher Application
 // for managing the Aces uber system accross campus. 
 
+// Global Variables
+var options = ["white ACES vehicle", "tan medical car", "#26 ACES van"]; //Example
+
 // Wait for page to finish loading.
 document.addEventListener("DOMContentLoaded", event => {
 	const app = firebase.app();
@@ -61,6 +64,18 @@ function correctLogin() {
 
 	constructPendingRides(ref, htmlItemsPending, left, logs, log);
 	constructActiveRides(ref, htmlItemsActive, right, logs, log);
+	constructVehicleListener(ref);
+}
+
+//IN PROGRESS
+function constructVehicleListener(ref) {
+	var vehicleRef = ref.child("VEHICLES");
+	vehicleRef.on("value", function(snapshot) {
+		options = [];
+		snapshot.forEach(function(child) {
+			options.push(child.val());
+		});
+	});
 }
 
 // Removes components from the login screen.
@@ -411,7 +426,6 @@ function createTextAndButtons(output, email, ref, type, htmlItems, column) {
 // Parameters: ref - reference to the firebase tree (root)
 //			   email - current email of the ride
 function notifyAction(btn, ref, email, vehicle) {
-	var options = ["white ACES vehicle", "tan medical car", "#26 ACES van"];
 	var stringvar = '<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"><p>Assign Vehicle<button id="edit" style="float: right;">Edit Vehicles</button></p><select id="dropdown"></select></div></div></div>';
 	var popUpList = $(stringvar);
 	var stringvar2= '<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"><p>Notification format:<br>"Watch for the _____"<br>Current list of vehicles:</p><input type="text" id="list"></div></div></div>';
@@ -470,7 +484,17 @@ function notifyAction(btn, ref, email, vehicle) {
 			buttons: [ { 
 				text: "Confrim",
 				click: function() {
-					//SAVE
+					var vehicles = list.value;
+					var newOptions = vehicles.split(',');
+					console.log(newOptions);
+					var vehicleRef = ref.child("VEHICLES");
+					vehicleRef.once('value', function(snapshot) {
+						var count = 0;
+						for (var i = 0; i < newOptions.length; i++) {
+							vehicleRef.update({[count] : newOptions[i]});
+							count = count + 1;
+						}
+					});
 					$(this).dialog("close");
 					$(this).dialog('destroy').remove();
 				}}, {
@@ -483,9 +507,10 @@ function notifyAction(btn, ref, email, vehicle) {
 		});
 		var list = document.getElementById("list");
 		var output = "";
-		for (var i = 0; i < options.length; i++) {
+		for (var i = 0; i < options.length-1; i++) {
 			output = output + options[i] + ", ";
 		}
+		output = output + options[options.length-1];
 		list.setAttribute("value", output);
 		$(popUpList2).parent().children().children('.ui-dialog-titlebar-close').hide();
 		$(popUpList2).dialog('open');
