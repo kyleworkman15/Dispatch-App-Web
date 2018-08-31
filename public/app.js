@@ -45,7 +45,7 @@ function correctLogin() {
 	var logs = [];
 
 	constructStatus(ref, div);
-	constructExport(ref);
+	constructExportEdit(ref);
 	constructAddRide(ref);
 
 	// construct the three columns
@@ -143,18 +143,24 @@ function toggleStatus(ref) {
 	});
 }
 
-// Constructs the text and button needed for exporting data.
+// Constructs the buttons needed for exporting data editing vehicles.
 // Parameters: ref - reference to the firebase database
-function constructExport(ref) {
+function constructExportEdit(ref) {
 	var div = document.createElement("div");
 	div.style.textAlign = "center";
 	var finish = document.createElement("BUTTON");
 	finish.innerHTML = "Finish session and download spreadsheet";
-	finish.style.cssFloat = "center"
+	finish.style.cssFloat = "center";
 	finish.addEventListener("click", function() { exportAction(ref) });
+	document.body.appendChild(div);
+	var edit = document.createElement("BUTTON");
+	edit.innerHTML = "Edit Vehicles";
+	edit.style.cssFloat = "center";
+	edit.addEventListener("click", function() { editAction(ref) });
 	div.appendChild(document.createElement("p"));
 	div.appendChild(finish);
-	document.body.appendChild(div);
+	div.appendChild(document.createTextNode(" "));
+	div.appendChild(edit);
 }
 
 // Method for handeling the export to CSV file when the button is clicked.
@@ -359,7 +365,7 @@ function constructActiveRides(ref, htmlItemsActive, column, logs, log) {
 				output = "";
 				var notify = document.createElement("BUTTON");
 				notify.innerHTML = "Notify";
-				notify.addEventListener("click", function() { notifyAction(this, ref, email, vehicle) });
+				notify.addEventListener("click", function() { notifyAction(ref, email, vehicle) });
 				div.appendChild(notify);
 			} 
 		});
@@ -425,26 +431,24 @@ function createTextAndButtons(output, email, ref, type, htmlItems, column) {
 // Notifies the user that their ride has arrived
 // Parameters: ref - reference to the firebase tree (root)
 //			   email - current email of the ride
-function notifyAction(btn, ref, email, vehicle) {
-	var stringvar = '<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"><p>Assign Vehicle<button id="edit" style="float: right;">Edit Vehicles</button></p><select id="dropdown"></select></div></div></div>';
+function notifyAction(ref, email, vehicle) {
+	var stringvar = '<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"><p>Assign vehicle</p><select id="dropdown"></select><button id="edit" style="float: right;">Edit Vehicles</button><p class="nospace">Choose type of notification:</p></div></div></div>';
 	var popUpList = $(stringvar);
-	var stringvar2= '<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"><p>Notification format:<br>"Watch for the _____"<br>Current list of vehicles:</p><input type="text" id="list"></div></div></div>';
-	var	popUpList2 = $(stringvar2);
 	$(popUpList).dialog({
 			title: 'Choose a Vehicle',
-			draggable: false,
+			width: 440,
 			resizable: false,
 			closeOnEscape: false,
 			modal: true,
 			autoOpen: false,
 			buttons: [ { 
-				text: "Notify OMW",
+				text: "On The Way",
 				click: function() {
 					var user = ref.child("ACTIVE RIDES").child(email);
 					user.once('value', function(snapshot) {
 						if (snapshot.hasChildren()) {
 							var vehicle = $('#dropdown option:selected').text();
-							user.child("notify").set({"email" : email, "vehicle" : vehicle, "id" : 0});
+							user.child("notify").set({"email" : email, "vehicle" : vehicle.replace(/ *\([^)]*\) */g, ""), "id" : 0});
 							user.child("notify").remove();
 							user.update({"eta" : "On the Way!", "etaTimestamp" : 1, "vehicle" : vehicle});
 						}
@@ -452,13 +456,13 @@ function notifyAction(btn, ref, email, vehicle) {
 					$(this).dialog("close");
 					$(this).dialog('destroy').remove();
 				}}, {
-				text: "Notify Here",
+				text: "Here",
 				click: function() {
 					var user = ref.child("ACTIVE RIDES").child(email);
 					user.once('value', function(snapshot) {
 						if (snapshot.hasChildren()) {
 							var vehicle = $('#dropdown option:selected').text();
-							user.child("notify").set({"email" : email, "vehicle" : vehicle, "id" : 1});
+							user.child("notify").set({"email" : email, "vehicle" : vehicle.replace(/ *\([^)]*\) */g, ""), "id" : 1});
 							user.child("notify").remove();
 							user.update({"eta" : "Here!", "etaTimestamp" : 0, "vehicle" : vehicle});
 						}
@@ -473,48 +477,7 @@ function notifyAction(btn, ref, email, vehicle) {
 				}}
 			]
 	});
-	$('#edit').click(function() {
-		$(popUpList2).dialog({
-			title: 'Edit Vehicles',
-			draggable: false,
-			resizable: false,
-			closeOnEscape: false,
-			modal: true,
-			autoOpen: false,
-			buttons: [ { 
-				text: "Confrim",
-				click: function() {
-					var vehicles = list.value;
-					var newOptions = vehicles.split(',');
-					console.log(newOptions);
-					var vehicleRef = ref.child("VEHICLES");
-					vehicleRef.once('value', function(snapshot) {
-						var count = 0;
-						for (var i = 0; i < newOptions.length; i++) {
-							vehicleRef.update({[count] : newOptions[i]});
-							count = count + 1;
-						}
-					});
-					$(this).dialog("close");
-					$(this).dialog('destroy').remove();
-				}}, {
-				text: "Cancel",
-				click: function() {
-					$(this).dialog("close");
-					$(this).dialog('destroy').remove();
-				}}
-			]
-		});
-		var list = document.getElementById("list");
-		var output = "";
-		for (var i = 0; i < options.length-1; i++) {
-			output = output + options[i] + ", ";
-		}
-		output = output + options[options.length-1];
-		list.setAttribute("value", output);
-		$(popUpList2).parent().children().children('.ui-dialog-titlebar-close').hide();
-		$(popUpList2).dialog('open');
-	});
+	$('#edit').click(function() { editAction(ref) });
 	var selector = document.getElementById("dropdown");
 	for (var i = 0; i < options.length; i++) {
 		var option = document.createElement("option");
@@ -523,10 +486,66 @@ function notifyAction(btn, ref, email, vehicle) {
 		selector.appendChild(option);
 	}
 	if (vehicle != null) {
-		selector.value = vehicle;
+		setVehicle: for (i = 0; i < selector.length; i++){
+			if (selector.options[i].value == vehicle){
+				selector.value = vehicle;
+				break setVehicle;
+			}
+		}
 	}
 	$(popUpList).parent().children().children('.ui-dialog-titlebar-close').hide();
 	$(popUpList).dialog('open');
+}
+
+// 
+function editAction(ref) {
+	var stringvar2= '<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"><p><b>*Separate vehicles by line*<br>*Driver\'s name inside of parentheses () will NOT be sent*</b><br><br>Notification format: "Watch for the __________"<br><br>Current list of vehicles/drivers:</p><textarea id="list" rows="5" cols="30" style="resize: none;"></textarea></div></div></div>';
+	var	popUpList2 = $(stringvar2);
+	$(popUpList2).dialog({
+		title: 'Edit Vehicles',
+		resizable: false,
+		closeOnEscape: false,
+		modal: true,
+		autoOpen: false,
+		buttons: [ { 
+			text: "Confrim",
+			click: function() {
+				var vehicles = list.value;
+				var newOptions = vehicles.split('\n');
+				var vehicleRef = ref.child("VEHICLES");
+				vehicleRef.once('value', function(snapshot) {
+					vehicleRef.remove();
+					var count = 0;
+					for (var i = 0; i < newOptions.length; i++) {
+						if (newOptions[i] != "") {
+							vehicleRef.update({[count] : newOptions[i]});
+							count = count + 1;
+						}
+					}
+				});
+				$(this).dialog("close");
+				$(this).dialog('destroy').remove();
+				$(".ui-dialog-content").dialog("close");
+				$(".ui-dialog-content").dialog("destroy").remove();
+			}}, {
+			text: "Cancel",
+			click: function() {
+				$(this).dialog("close");
+				$(this).dialog('destroy').remove();
+			}}
+		]
+	});
+	var list = document.getElementById("list");
+	var output = "";
+	for (var i = 0; i < options.length-1; i++) {
+		output = output + options[i] + "\n";
+	}
+	if (options.length > 0) {
+		output = output + options[options.length-1];
+	}
+	list.innerHTML = output;
+	$(popUpList2).parent().children().children('.ui-dialog-titlebar-close').hide();
+	$(popUpList2).dialog('open');
 }
 
 // Method for handeling the update action from the update button.
