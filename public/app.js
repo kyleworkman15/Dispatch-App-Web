@@ -295,7 +295,7 @@ function constructPendingRides(ref, htmlItemsPending, column, logs, log) {
 				"<b>Time: </b>"+child.child("time").val() + "<br>" +
 				"<b>Number of Riders: </b>"+child.child("numRiders").val() + "<br>" +
 				"<b>From: </b>"+child.child("start").val() + "<br>" +
-				"<b>To: </b>"+child.child("end").val() + "<br>";
+				"<b>To: </b>"+child.child("end").val();
 				createTextAndButtons(output, email, pendingRidesRef, "pending", htmlItemsPending, column);
 				output = "";
 			} 
@@ -335,14 +335,17 @@ function constructActiveRides(ref, htmlItemsActive, column, logs, log) {
 				"<b>From: </b>"+child.child("start").val() + "<br>" +
 				"<b>To: </b>"+child.child("end").val() + "<br>" +
 				"<b>Current Wait Time: </b>"+child.child("waitTime").val() + "<br>" +
-				"<b>ETA: </b>"+child.child("eta").val() + "<br>";
-				createTextAndButtons(output, email, activeRidesRef, "active", htmlItemsActive, column);
+				"<b>ETA: </b>"+child.child("eta").val();
+				var vehicle = child.child("vehicle").val();
+				if (vehicle != null) {
+					output = output + "<br><b>Vehicle: </b>"+vehicle;
+				}
+				var div = createTextAndButtons(output, email, activeRidesRef, "active", htmlItemsActive, column);
 				output = "";
 				var notify = document.createElement("BUTTON");
 				notify.innerHTML = "Notify";
-				notify.addEventListener("click", function() { notifyAction(this, ref, email) });
-				column.appendChild(notify);
-				htmlItemsActive.push(notify);
+				notify.addEventListener("click", function() { notifyAction(this, ref, email, vehicle) });
+				div.appendChild(notify);
 			} 
 		});
 	});
@@ -372,7 +375,10 @@ function drawLogs(logs, column) {
 //			   htmlItems - array for holding html items currently being used
 // 						   by this current ride
 function createTextAndButtons(output, email, ref, type, htmlItems, column) {
+	var div = document.createElement("div");
+	div.setAttribute("style", "background-color:powderblue;");
 	var para = document.createElement("p");
+	para.setAttribute("class", "nospace");
 	var textField = document.createElement("INPUT");
 	var updateButton = document.createElement("BUTTON");
 	var completeButton = document.createElement("BUTTON");
@@ -380,31 +386,36 @@ function createTextAndButtons(output, email, ref, type, htmlItems, column) {
 	para.innerHTML = output;
 	textField.setAttribute("size", "1");
 	textField.setAttribute("type", "text");
-	updateButton.innerHTML = "Update Wait Time";
+	updateButton.innerHTML = "Update";
 	completeButton.innerHTML = "Complete";
 	cancelButton.innerHTML = "Cancel";
 	textField.addEventListener("keyup", function(event){ enterAction(event, updateButton) });
 	updateButton.addEventListener("click", function() { updateAction(email, ref, textField, completeButton) });
 	completeButton.addEventListener("click", function() { completeAction(email, ref) });
 	cancelButton.addEventListener("click", function() { cancelAction(email, ref, type) });
-	htmlItems.push(para, textField, updateButton, completeButton, cancelButton);
-	column.appendChild(para);
-	column.appendChild(textField);
-	column.appendChild(updateButton);
-	column.appendChild(completeButton);
-	column.appendChild(cancelButton);
+	htmlItems.push(div);
+	div.appendChild(para);
+	div.appendChild(textField);
+	div.appendChild(updateButton);
+	div.appendChild(completeButton);
+	div.appendChild(cancelButton);
+	column.appendChild(div);
 	if (type === "pending") {
 		completeButton.disabled = true;
 	}
+	return div;
 	//checkReorder(type);
 }
 
 // Notifies the user that their ride has arrived
 // Parameters: ref - reference to the firebase tree (root)
 //			   email - current email of the ride
-function notifyAction(btn, ref, email) {
-	var stringvar = '<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"><p>"Watch for the</p><select id="dropdown"><option>White</option><option>#2</option><option>Black</option><option>#26</option><option>Orange</option></select><p>ACES vehicle."</p></div></div></div>';
+function notifyAction(btn, ref, email, vehicle) {
+	var options = ["white ACES vehicle", "tan medical car", "#26 ACES van"];
+	var stringvar = '<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"><p>Assign Vehicle<button id="edit" style="float: right;">Edit Vehicles</button></p><select id="dropdown"></select></div></div></div>';
 	var popUpList = $(stringvar);
+	var stringvar2= '<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"><p>Notification format:<br>"Watch for the _____"<br>Current list of vehicles:</p><input type="text" id="list"></div></div></div>';
+	var	popUpList2 = $(stringvar2);
 	$(popUpList).dialog({
 			title: 'Choose a Vehicle',
 			draggable: false,
@@ -412,20 +423,84 @@ function notifyAction(btn, ref, email) {
 			closeOnEscape: false,
 			modal: true,
 			autoOpen: false,
-			buttons: {
-				Notify: function() {
+			buttons: [ { 
+				text: "Notify OMW",
+				click: function() {
 					var user = ref.child("ACTIVE RIDES").child(email);
-					var message = $('#dropdown option:selected').text();
-					user.child("notify").set({"email" : email, "message" : message});
-					user.child("notify").remove();
-					user.update({"eta" : "Here!"});
+					user.once('value', function(snapshot) {
+						if (snapshot.hasChildren()) {
+							var vehicle = $('#dropdown option:selected').text();
+							user.child("notify").set({"email" : email, "vehicle" : vehicle, "id" : 0});
+							user.child("notify").remove();
+							user.update({"eta" : "On the Way!", "etaTimestamp" : 1, "vehicle" : vehicle});
+						}
+					});
 					$(this).dialog("close");
-				},
-				Cancel: function() {
+					$(this).dialog('destroy').remove();
+				}}, {
+				text: "Notify Here",
+				click: function() {
+					var user = ref.child("ACTIVE RIDES").child(email);
+					user.once('value', function(snapshot) {
+						if (snapshot.hasChildren()) {
+							var vehicle = $('#dropdown option:selected').text();
+							user.child("notify").set({"email" : email, "vehicle" : vehicle, "id" : 1});
+							user.child("notify").remove();
+							user.update({"eta" : "Here!", "etaTimestamp" : 0, "vehicle" : vehicle});
+						}
+					});
 					$(this).dialog("close");
-				}
-			}
+					$(this).dialog('destroy').remove();
+				}}, {
+				text: "Cancel",
+				click: function() {
+					$(this).dialog("close");
+					$(this).dialog('destroy').remove()
+				}}
+			]
 	});
+	$('#edit').click(function() {
+		$(popUpList2).dialog({
+			title: 'Edit Vehicles',
+			draggable: false,
+			resizable: false,
+			closeOnEscape: false,
+			modal: true,
+			autoOpen: false,
+			buttons: [ { 
+				text: "Confrim",
+				click: function() {
+					//SAVE
+					$(this).dialog("close");
+					$(this).dialog('destroy').remove();
+				}}, {
+				text: "Cancel",
+				click: function() {
+					$(this).dialog("close");
+					$(this).dialog('destroy').remove();
+				}}
+			]
+		});
+		var list = document.getElementById("list");
+		var output = "";
+		for (var i = 0; i < options.length; i++) {
+			output = output + options[i] + ", ";
+		}
+		list.setAttribute("value", output);
+		$(popUpList2).parent().children().children('.ui-dialog-titlebar-close').hide();
+		$(popUpList2).dialog('open');
+	});
+	var selector = document.getElementById("dropdown");
+	for (var i = 0; i < options.length; i++) {
+		var option = document.createElement("option");
+		option.value = options[i];
+		option.text = options[i];
+		selector.appendChild(option);
+	}
+	if (vehicle != null) {
+		selector.value = vehicle;
+	}
+	$(popUpList).parent().children().children('.ui-dialog-titlebar-close').hide();
 	$(popUpList).dialog('open');
 }
 
