@@ -386,7 +386,12 @@ function drawLogs(logs, column) {
 		column.removeChild(column.firstChild);
 	}
 	var output = "<h2>Log:</h2></br>";
-	for (var i = logs.length - 1; i >= 0; --i) {
+	var stop = 0;
+	var size = logs.length;
+	if (size > 50) { // 50 is length of shown logs
+		stop = size - 50;
+	}
+	for (var i = size - 1; i >= stop; --i) {
 		output = output + logs[i] + "</br>";
 	}
 	var para = document.createElement("p");
@@ -514,7 +519,7 @@ function editAction(ref) {
 		modal: true,
 		autoOpen: false,
 		buttons: [ { 
-			text: "Confrim",
+			text: "Confirm",
 			click: function() {
 				var vehicles = list.value;
 				var newOptions = vehicles.split('\n');
