@@ -182,7 +182,7 @@ function exportMove(ref, type) {
 		var index = 0;
 		snapshot.forEach(function(child) {
 			var values = child.val();
-			data[index] = new Array(values.email, values.start, values.end, values.numRiders, values.time, values.waitTime, values.eta, values.endTime);
+			data[index] = new Array(values.email, values.start, values.end, values.numRiders, values.time, values.waitTime, values.eta, values.endTime, values.vehicle);
 			archived.child(data[index][0] + "_" + values.timestamp).set({ 
 				email: data[index][0],
 				end: data[index][2], 
@@ -192,6 +192,7 @@ function exportMove(ref, type) {
 				start: data[index][1],
 				time: data[index][4],
 				waitTime: data[index][5],
+				vehicle: data[index][8],
 			});
 			//ref.child(data[index][0]).remove();
 			index++;
@@ -205,7 +206,7 @@ function exportMove(ref, type) {
 // Parameters: data - the data as a 2D array to be exported to a CSV
 //     	 	   type - string to determine which type of rides (completed or cancelled)
 function exportToCSV(data, type) {
-	let csvContent = "data:text/csv;charset=utf-8,Email,From,To,Number of Riders,Time,Wait Time,ETA,End Time\r\n";
+	let csvContent = "data:text/csv;charset=utf-8,Email,From,To,Number of Riders,Time,Wait Time,ETA,End Time,Vehicle\r\n";
 	data.forEach(function(rowArray) {
 		rowArray[0] = rowArray[0].replace(",", ".");
 		csvContent += rowArray.join(",") + "\r\n";
@@ -273,6 +274,7 @@ function addRideAction(ref, fields) {
 			timestamp: date.getTime(),
 			waitTime: 1000,
 			token: " ",
+			vehicle: " ",
 		});
 		clearFields(fields);
 	} else {
@@ -358,7 +360,7 @@ function constructActiveRides(ref, htmlItemsActive, column, logs, log) {
 				"<b>Current Wait Time: </b>"+child.child("waitTime").val() + "<br>" +
 				"<b>ETA: </b>"+child.child("eta").val();
 				var vehicle = child.child("vehicle").val();
-				if (vehicle != null) {
+				if (vehicle != " ") {
 					output = output + "<br><b>Vehicle: </b>"+vehicle;
 				}
 				var div = createTextAndButtons(output, email, activeRidesRef, "active", htmlItemsActive, column);
@@ -569,7 +571,7 @@ function updateAction(email, ref, textField, completeButton) {
 						var active = firebase.database().ref().child("ACTIVE RIDES");
 						var attributes = [email, snapshot.val().end, 
 							snapshot.val().endTime, eta, snapshot.val().numRiders, 
-							snapshot.val().start, snapshot.val().time, ts, waitTime, snapshot.val().token];
+							snapshot.val().start, snapshot.val().time, ts, waitTime, snapshot.val().token, " "];
 						user.remove();
 						completeButton.disabled = false;
 						active.child(email).set({ 
@@ -584,6 +586,7 @@ function updateAction(email, ref, textField, completeButton) {
 							waitTime: attributes[8],
 							token: attributes[9],
 							etaTimestamp: etaDate.getTime(),
+							vehicle: attributes[10],
 						});
 					} else {
 						var eta = calculateETA(waitTime);
@@ -638,6 +641,7 @@ function completeAction(email, ref) {
 			time: snapshot.val().time,
 			timestamp: ts,
 			waitTime: snapshot.val().waitTime,
+			vehicle: snapshot.val().vehicle,
 		});
 		user.remove();
 	});
@@ -664,6 +668,7 @@ function cancelAction(email, ref, type) {
 				time: snapshot.val().time,
 				timestamp: ts,
 				waitTime: snapshot.val().waitTime,
+				vehicle: snapshot.val().vehicle,
 			});
 			user.remove();
 			checkReorder(type);
