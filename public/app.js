@@ -363,11 +363,15 @@ function constructActiveRides(ref, htmlItemsActive, column, logs, log) {
 				if (vehicle != " ") {
 					output = output + "<br><b>Vehicle: </b>"+vehicle;
 				}
+				var token = child.child("token").val();
 				var div = createTextAndButtons(output, email, activeRidesRef, "active", htmlItemsActive, column);
 				output = "";
 				var notify = document.createElement("BUTTON");
 				notify.innerHTML = "Notify";
 				notify.addEventListener("click", function() { notifyAction(ref, email, vehicle) });
+				if (token == " ") {
+					notify.disabled = true;
+				}
 				div.appendChild(notify);
 			} 
 		});
