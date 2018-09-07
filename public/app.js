@@ -419,8 +419,8 @@ function constructActiveRides(ref, column, logs, log) {
 // Parameters: logs - the array of logs to be displayed
 //			   column - the div object to be displayed in
 function drawLogs(logs, column) {
-	while(column.firstChild) {
-		column.removeChild(column.firstChild);
+	while(column.childElementCount > 1) {
+		column.removeChild(column.lastChild);
 	}
 	var output = "";
 	var stop = 0;
@@ -495,6 +495,7 @@ function notifyAction(ref, email, vehicle) {
 							var vehicle = $('#dropdown option:selected').text();
 							user.child("notify").set({"email" : email, "vehicle" : vehicle.replace(/ *\([^)]*\) */g, ""), "id" : 0});
 							user.child("notify").remove();
+							document.getElementById(email).remove();
 							user.update({"eta" : "On the Way!", "etaTimestamp" : 1, "vehicle" : vehicle});
 						}
 					});
@@ -509,6 +510,7 @@ function notifyAction(ref, email, vehicle) {
 							var vehicle = $('#dropdown option:selected').text();
 							user.child("notify").set({"email" : email, "vehicle" : vehicle.replace(/ *\([^)]*\) */g, ""), "id" : 1});
 							user.child("notify").remove();
+							document.getElementById(email).remove();
 							user.update({"eta" : "Here!", "etaTimestamp" : 0, "vehicle" : vehicle});
 						}
 					});
