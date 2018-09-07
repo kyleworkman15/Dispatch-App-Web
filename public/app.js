@@ -40,8 +40,6 @@ function correctLogin() {
 	removePreviousComponents();
 	var div = buildText();
 
-	var htmlItemsPending = [];
-	var htmlItemsActive = [];
 	var logs = [];
 
 	constructStatus(ref, div);
@@ -75,8 +73,8 @@ function correctLogin() {
 	logHeader.setAttribute("class", "middle");
 	log.appendChild(logHeader);
 
-	constructPendingRides(ref, htmlItemsPending, left, logs, log);
-	constructActiveRides(ref, htmlItemsActive, right, logs, log);
+	constructPendingRides(ref, left, logs, log);
+	constructActiveRides(ref, right, logs, log);
 	constructVehicleListener(ref);
 }
 
@@ -328,36 +326,33 @@ function clearFields(fields) {
 // Constructs the list of pending rides including the text,
 // input text field, and the buttons.
 // Parameters: ref - reference to the firebase database
-//             htmlItemsPending - array to hold all html items currently
-//								  being used by the pending rides
 // 			   column - the div object to display the pending rides in
 //			   logs - the array of logs to be displayed
 //			   log - the div object to display the log
-function constructPendingRides(ref, htmlItemsPending, column, logs, log) {
+function constructPendingRides(ref, column, logs, log) {
 	var pendingRidesRef = ref.child("PENDING RIDES");
 	pendingRidesRef.orderByChild("timestamp").on("value", function(snapshot) { 
 		var output = "";
 		snapshot.forEach(function(child) {
 			var email = child.child("email").val();
 			var endTime = child.child("endTime").val();
-			var ts = child.child("timestamp").val();
 			if (endTime == "Cancelled by Dispatcher") {
-				document.getElementById(ts).remove();
+				document.getElementById(email).remove();
 				logs.push("- " + calculateETA(0) + ": " + email.replace(",", ".") + " - Cancelled by Dispatcher");
 				drawLogs(logs, log);
 			} else if (endTime == "Cancelled by User") {
-				document.getElementById(ts).remove();
+				document.getElementById(email).remove();
 				logs.push("<span class=user>" + "- " + calculateETA(0) +  ": " + email.replace(",", ".") + " - Cancelled by User</span>");
 				drawLogs(logs, log);
 			} else if (child.child("waitTime").val() != null) {
-				if (!document.body.contains(document.getElementById(ts))) {
+				if (!document.body.contains(document.getElementById(email))) {
 					var email = child.child("email").val();
 					output = output + "<b>Email: </b>"+email.replace(",", ".") + "<br>" +
 					"<b>Time: </b>"+child.child("time").val() + "<br>" +
 					"<b>Number of Riders: </b>"+child.child("numRiders").val() + "<br>" +
 					"<b>From: </b>"+child.child("start").val() + "<br>" +
 					"<b>To: </b>"+child.child("end").val();
-					var div = createTextAndButtons(output, email, pendingRidesRef, "pending", htmlItemsPending, column, ts);
+					var div = createTextAndButtons(output, email, pendingRidesRef, "pending", column);
 					output = "";
 				}
 			} 
@@ -368,33 +363,30 @@ function constructPendingRides(ref, htmlItemsPending, column, logs, log) {
 // Constructs the list of active rides including the text,
 // input text field, and the buttons.
 // Parameters: ref - reference to the firebase database
-// 		       htmlItemsActive - array to hold all html items currently
-// 			  		 	 	     being used by the acitve rides
 // 			   column - the div object to display the active rides in
 //			   logs - the array of logs to be displayed
 //			   log - the div object to display the log
-function constructActiveRides(ref, htmlItemsActive, column, logs, log) {
+function constructActiveRides(ref, column, logs, log) {
 	var activeRidesRef = ref.child("ACTIVE RIDES");
 	activeRidesRef.orderByChild("etaTimestamp").on("value", function(snapshot) {
 		var output = "";
 		snapshot.forEach(function(child) {
 			var email = child.child("email").val();
 			var endTime = child.child("endTime").val();
-			var ts = child.child("timestamp").val();
 			if (endTime == "Cancelled by Dispatcher") {
-				document.getElementById(ts).remove();
+				document.getElementById(email).remove();
 				logs.push("- " + calculateETA(0) + ": " + email.replace(",", ".") + " - Cancelled by Dispatcher");
 				drawLogs(logs, log);
 			} else if (endTime == "Cancelled by User") {
-				document.getElementById(ts).remove();
+				document.getElementById(email).remove();
 				logs.push("<span class=user>" + "- " + calculateETA(0) + ": " + email.replace(",", ".") + " - Cancelled by User</span>");
 				drawLogs(logs, log);
 			} else if (endTime != null && endTime.includes("M")) {
-				document.getElementById(ts).remove();
+				document.getElementById(email).remove();
 				logs.push("- " + calculateETA(0) + ": " + email.replace(",", ".") + " - Completed");
 				drawLogs(logs, log);
 			} else {
-				if (!document.body.contains(document.getElementById(ts))) {
+				if (!document.body.contains(document.getElementById(email))) {
 					output = output + "<b>Email: </b>"+email.replace(",", ".") + "<br>" +
 					"<b>Time: </b>"+child.child("time").val() + "<br>" +
 					"<b>Number of Riders: </b>"+child.child("numRiders").val() + "<br>" +
@@ -407,7 +399,7 @@ function constructActiveRides(ref, htmlItemsActive, column, logs, log) {
 						output = output + "<br><b>Vehicle: </b>"+vehicle;
 					}
 					var token = child.child("token").val();
-					var div = createTextAndButtons(output, email, activeRidesRef, "active", htmlItemsActive, column, ts);
+					var div = createTextAndButtons(output, email, activeRidesRef, "active", column);
 					output = "";
 					var notify = document.createElement("BUTTON");
 					notify.innerHTML = "Notify";
@@ -448,9 +440,7 @@ function drawLogs(logs, column) {
 //			   email - current email of the ride
 //			   ref - reference to the firebase tree (pending or active)
 //			   type - string to determine if the ride is pending or active
-//			   htmlItems - array for holding html items currently being used
-// 						   by this current ride
-function createTextAndButtons(output, email, ref, type, htmlItems, column, ts) {
+function createTextAndButtons(output, email, ref, type, column) {
 	var div = document.createElement("div");
 	div.setAttribute("style", "background-color:powderblue;");
 	var para = document.createElement("p");
@@ -469,13 +459,12 @@ function createTextAndButtons(output, email, ref, type, htmlItems, column, ts) {
 	updateButton.addEventListener("click", function() { updateAction(email, ref, textField, completeButton) });
 	completeButton.addEventListener("click", function() { completeAction(email, ref) });
 	cancelButton.addEventListener("click", function() { cancelAction(email, ref, type) });
-	htmlItems.push(div);
 	div.appendChild(para);
 	div.appendChild(textField);
 	div.appendChild(updateButton);
 	div.appendChild(completeButton);
 	div.appendChild(cancelButton);
-	div.setAttribute("id", ts);
+	div.setAttribute("id", email);
 	column.appendChild(div);
 	if (type === "pending") {
 		completeButton.disabled = true;
@@ -617,7 +606,7 @@ function updateAction(email, ref, textField, completeButton) {
 		user.once("value", function(snapshot) {
 			var email = snapshot.val().email;
 			var ts = snapshot.val().timestamp;
-			document.getElementById(ts).remove();
+			document.getElementById(email).remove();
 			firebase.database().ref().child("CANCELLED RIDES").child(email + "_" + ts).once("value", function(snap) { 
 				if (!snap.hasChildren()) { // for checking if the ride cancelled already (duplicate ride bug)
 					if (snapshot.val().waitTime == "1000") {
