@@ -405,9 +405,6 @@ function constructActiveRides(ref, column, logs, log) {
 					var notify = document.createElement("BUTTON");
 					notify.innerHTML = "Notify";
 					notify.addEventListener("click", function() { notifyAction(ref, email, vehicle) });
-					if (token == " ") {
-						notify.disabled = true;
-					}
 					div.appendChild(notify);
 				}
 			} 
@@ -492,9 +489,12 @@ function notifyAction(ref, email, vehicle) {
 					var user = ref.child("ACTIVE RIDES").child(email);
 					user.once('value', function(snapshot) {
 						if (snapshot.hasChildren()) {
+							var token = snapshot.child("token").val();
 							var vehicle = $('#dropdown option:selected').text();
-							user.child("notify").set({"email" : email, "vehicle" : vehicle.replace(/ *\([^)]*\) */g, ""), "id" : 0});
-							user.child("notify").remove();
+							if (token != " ") {
+								user.child("notify").set({"email" : email, "vehicle" : vehicle.replace(/ *\([^)]*\) */g, ""), "id" : 0});
+								user.child("notify").remove();
+							}
 							document.getElementById(email).remove();
 							user.update({"eta" : "On the Way!", "etaTimestamp" : 1, "vehicle" : vehicle});
 						}
@@ -507,9 +507,12 @@ function notifyAction(ref, email, vehicle) {
 					var user = ref.child("ACTIVE RIDES").child(email);
 					user.once('value', function(snapshot) {
 						if (snapshot.hasChildren()) {
+							var token = snapshot.child("token").val();
 							var vehicle = $('#dropdown option:selected').text();
-							user.child("notify").set({"email" : email, "vehicle" : vehicle.replace(/ *\([^)]*\) */g, ""), "id" : 1});
-							user.child("notify").remove();
+							if (token != " ") {
+								user.child("notify").set({"email" : email, "vehicle" : vehicle.replace(/ *\([^)]*\) */g, ""), "id" : 1});
+								user.child("notify").remove();
+							}
 							document.getElementById(email).remove();
 							user.update({"eta" : "Here!", "etaTimestamp" : 0, "vehicle" : vehicle});
 						}
@@ -546,7 +549,7 @@ function notifyAction(ref, email, vehicle) {
 
 // 
 function editAction(ref) {
-	var stringvar2= '<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"><p><b>*Separate vehicles by line*<br>*Driver\'s name inside of parentheses () will NOT be sent*</b><br><br>Notification format: "Watch for the __________"<br><br>Current list of vehicles/drivers:</p><textarea id="list" rows="5" cols="30" style="resize: none;"></textarea></div></div></div>';
+	var stringvar2= '<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"><p><b>*Separate vehicles by line*<br><br>*Driver\'s name inside of parentheses () will NOT be sent*</b><br><br>Notification format: "Watch for the __________"<br><br>Current list of vehicles/drivers:</p><textarea id="list" rows="5" cols="30" style="resize: none;"></textarea></div></div></div>';
 	var	popUpList2 = $(stringvar2);
 	$(popUpList2).dialog({
 		title: 'Edit Vehicles',
