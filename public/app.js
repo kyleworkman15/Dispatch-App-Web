@@ -492,11 +492,12 @@ function notifyAction(ref, email, vehicle) {
 							var token = snapshot.child("token").val();
 							var vehicle = $('#dropdown option:selected').text();
 							if (token != " ") {
-								user.child("notify").set({"email" : email, "vehicle" : vehicle.replace(/ *\([^)]*\) */g, ""), "id" : 0});
+								user.child("notify").set({"email" : email, "vehicle" : vehicle.replace(/ *\([^)]*\) */g, ""), "id" : 0, "token" : token});
 								user.child("notify").remove();
+							} if (snapshot.child("etaTimestamp").val() != 1 || snapshot.child("vehicle").val() != vehicle) {
+								document.getElementById(email).remove();
+								user.update({"eta" : "On the Way!", "etaTimestamp" : 1, "vehicle" : vehicle});
 							}
-							document.getElementById(email).remove();
-							user.update({"eta" : "On the Way!", "etaTimestamp" : 1, "vehicle" : vehicle});
 						}
 					});
 					$(this).dialog("close");
@@ -510,11 +511,12 @@ function notifyAction(ref, email, vehicle) {
 							var token = snapshot.child("token").val();
 							var vehicle = $('#dropdown option:selected').text();
 							if (token != " ") {
-								user.child("notify").set({"email" : email, "vehicle" : vehicle.replace(/ *\([^)]*\) */g, ""), "id" : 1});
+								user.child("notify").set({"email" : email, "vehicle" : vehicle.replace(/ *\([^)]*\) */g, ""), "id" : 1, "token" : token});
 								user.child("notify").remove();
+							} if (snapshot.child("etaTimestamp").val() != 0 || snapshot.child("vehicle").val() != vehicle) {
+								document.getElementById(email).remove();
+								user.update({"eta" : "Here!", "etaTimestamp" : 0, "vehicle" : vehicle});
 							}
-							document.getElementById(email).remove();
-							user.update({"eta" : "Here!", "etaTimestamp" : 0, "vehicle" : vehicle});
 						}
 					});
 					$(this).dialog("close");
