@@ -170,6 +170,27 @@ function exportAction(ref) {
 	var cancelled = ref.child("CANCELLED RIDES");
 	exportMove(completed, "COMPLETED");
 	exportMove(cancelled, "CANCELLED");
+	cleanUp(ref);
+}
+
+// Clean database, anything older than 90 days
+function cleanUp(ref) {
+	var cutoff = new Date().getTime() - 7776000000; //7776000000 is 90 days in milliseconds
+	console.log(cutoff);
+	var oldCancelled = ref.child("ARCHIVED").child("CANCELLED").orderByChild("timestamp").endAt(cutoff);
+	var oldCompleted = ref.child("ARCHIVED").child("COMPLETED").orderByChild("timestamp").endAt(cutoff);
+	oldCancelled.once("value", function(snapshot) {
+		snapshot.forEach(function(child) {
+			console.log(child);
+			child.getRef().remove();
+		});
+	});
+	oldCompleted.once("value", function(snapshot) {
+		snapshot.forEach(function(child) {
+			console.log(child);
+			child.getRef().remove();
+		});
+	});
 }
 
 // Method for moving the completed/cancelled rides to archived.
@@ -191,10 +212,11 @@ function exportMove(ref, type) {
 				numRiders: data[index][3],
 				start: data[index][1],
 				time: data[index][4],
+				timestamp: values.timestamp,
 				waitTime: data[index][5],
 				vehicle: data[index][8],
 			});
-			//ref.child(data[index][0]).remove();
+			ref.child(data[index][0]).remove();
 			index++;
 		});
 		ref.remove();
