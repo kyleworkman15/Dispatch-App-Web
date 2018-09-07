@@ -62,6 +62,19 @@ function correctLogin() {
 	row.appendChild(log);
 	document.body.appendChild(row);
 
+	var pendingHeader = document.createElement("p");
+	pendingHeader.innerHTML = "<h2>Pending Rides: (Ordered by Arrival)</h2><br>";
+	pendingHeader.setAttribute("class", "middle");
+	left.appendChild(pendingHeader);
+	var activeHeader = document.createElement("p");
+	activeHeader.innerHTML = "<h2>Active Rides: (Ordered by ETA)</h2><br>";
+	activeHeader.setAttribute("class", "middle");
+	right.appendChild(activeHeader);
+	var logHeader = document.createElement("p");
+	logHeader.innerHTML = "<h2>Log:</h2></br>";
+	logHeader.setAttribute("class", "middle");
+	log.appendChild(logHeader);
+
 	constructPendingRides(ref, htmlItemsPending, left, logs, log);
 	constructActiveRides(ref, htmlItemsActive, right, logs, log);
 	constructVehicleListener(ref);
@@ -323,26 +336,30 @@ function clearFields(fields) {
 function constructPendingRides(ref, htmlItemsPending, column, logs, log) {
 	var pendingRidesRef = ref.child("PENDING RIDES");
 	pendingRidesRef.orderByChild("timestamp").on("value", function(snapshot) { 
-		reset(htmlItemsPending, column);
-		var output = "<h2>Pending Rides: (Ordered by Arrival)</h2><br>";
+		var output = "";
 		snapshot.forEach(function(child) {
 			var email = child.child("email").val();
 			var endTime = child.child("endTime").val();
+			var ts = child.child("timestamp").val();
 			if (endTime == "Cancelled by Dispatcher") {
+				document.getElementById(ts).remove();
 				logs.push("- " + calculateETA(0) + ": " + email.replace(",", ".") + " - Cancelled by Dispatcher");
 				drawLogs(logs, log);
 			} else if (endTime == "Cancelled by User") {
+				document.getElementById(ts).remove();
 				logs.push("<span class=user>" + "- " + calculateETA(0) +  ": " + email.replace(",", ".") + " - Cancelled by User</span>");
 				drawLogs(logs, log);
-			} else {
-				var email = child.child("email").val();
-				output = output + "<b>Email: </b>"+email.replace(",", ".") + "<br>" +
-				"<b>Time: </b>"+child.child("time").val() + "<br>" +
-				"<b>Number of Riders: </b>"+child.child("numRiders").val() + "<br>" +
-				"<b>From: </b>"+child.child("start").val() + "<br>" +
-				"<b>To: </b>"+child.child("end").val();
-				createTextAndButtons(output, email, pendingRidesRef, "pending", htmlItemsPending, column);
-				output = "";
+			} else if (child.child("waitTime").val() != null) {
+				if (!document.body.contains(document.getElementById(ts))) {
+					var email = child.child("email").val();
+					output = output + "<b>Email: </b>"+email.replace(",", ".") + "<br>" +
+					"<b>Time: </b>"+child.child("time").val() + "<br>" +
+					"<b>Number of Riders: </b>"+child.child("numRiders").val() + "<br>" +
+					"<b>From: </b>"+child.child("start").val() + "<br>" +
+					"<b>To: </b>"+child.child("end").val();
+					var div = createTextAndButtons(output, email, pendingRidesRef, "pending", htmlItemsPending, column, ts);
+					output = "";
+				}
 			} 
 		});
 	});
@@ -359,42 +376,47 @@ function constructPendingRides(ref, htmlItemsPending, column, logs, log) {
 function constructActiveRides(ref, htmlItemsActive, column, logs, log) {
 	var activeRidesRef = ref.child("ACTIVE RIDES");
 	activeRidesRef.orderByChild("etaTimestamp").on("value", function(snapshot) {
-		reset(htmlItemsActive, column);
-		var output = "<h2>Active Rides: (Ordered by ETA)</h2><br>";
+		var output = "";
 		snapshot.forEach(function(child) {
 			var email = child.child("email").val();
 			var endTime = child.child("endTime").val();
+			var ts = child.child("timestamp").val();
 			if (endTime == "Cancelled by Dispatcher") {
+				document.getElementById(ts).remove();
 				logs.push("- " + calculateETA(0) + ": " + email.replace(",", ".") + " - Cancelled by Dispatcher");
 				drawLogs(logs, log);
 			} else if (endTime == "Cancelled by User") {
+				document.getElementById(ts).remove();
 				logs.push("<span class=user>" + "- " + calculateETA(0) + ": " + email.replace(",", ".") + " - Cancelled by User</span>");
 				drawLogs(logs, log);
-			} else if (endTime.includes("M")) {
+			} else if (endTime != null && endTime.includes("M")) {
+				document.getElementById(ts).remove();
 				logs.push("- " + calculateETA(0) + ": " + email.replace(",", ".") + " - Completed");
 				drawLogs(logs, log);
 			} else {
-				output = output + "<b>Email: </b>"+email.replace(",", ".") + "<br>" +
-				"<b>Time: </b>"+child.child("time").val() + "<br>" +
-				"<b>Number of Riders: </b>"+child.child("numRiders").val() + "<br>" +
-				"<b>From: </b>"+child.child("start").val() + "<br>" +
-				"<b>To: </b>"+child.child("end").val() + "<br>" +
-				"<b>Current Wait Time: </b>"+child.child("waitTime").val() + "<br>" +
-				"<b>ETA: </b>"+child.child("eta").val();
-				var vehicle = child.child("vehicle").val();
-				if (vehicle != " ") {
-					output = output + "<br><b>Vehicle: </b>"+vehicle;
+				if (!document.body.contains(document.getElementById(ts))) {
+					output = output + "<b>Email: </b>"+email.replace(",", ".") + "<br>" +
+					"<b>Time: </b>"+child.child("time").val() + "<br>" +
+					"<b>Number of Riders: </b>"+child.child("numRiders").val() + "<br>" +
+					"<b>From: </b>"+child.child("start").val() + "<br>" +
+					"<b>To: </b>"+child.child("end").val() + "<br>" +
+					"<b>Current Wait Time: </b>"+child.child("waitTime").val() + "<br>" +
+					"<b>ETA: </b>"+child.child("eta").val();
+					var vehicle = child.child("vehicle").val();
+					if (vehicle != " ") {
+						output = output + "<br><b>Vehicle: </b>"+vehicle;
+					}
+					var token = child.child("token").val();
+					var div = createTextAndButtons(output, email, activeRidesRef, "active", htmlItemsActive, column, ts);
+					output = "";
+					var notify = document.createElement("BUTTON");
+					notify.innerHTML = "Notify";
+					notify.addEventListener("click", function() { notifyAction(ref, email, vehicle) });
+					if (token == " ") {
+						notify.disabled = true;
+					}
+					div.appendChild(notify);
 				}
-				var token = child.child("token").val();
-				var div = createTextAndButtons(output, email, activeRidesRef, "active", htmlItemsActive, column);
-				output = "";
-				var notify = document.createElement("BUTTON");
-				notify.innerHTML = "Notify";
-				notify.addEventListener("click", function() { notifyAction(ref, email, vehicle) });
-				if (token == " ") {
-					notify.disabled = true;
-				}
-				div.appendChild(notify);
 			} 
 		});
 	});
@@ -407,7 +429,7 @@ function drawLogs(logs, column) {
 	while(column.firstChild) {
 		column.removeChild(column.firstChild);
 	}
-	var output = "<h2>Log:</h2></br>";
+	var output = "";
 	var stop = 0;
 	var size = logs.length;
 	if (size > 50) { // 50 is length of shown logs
@@ -428,7 +450,7 @@ function drawLogs(logs, column) {
 //			   type - string to determine if the ride is pending or active
 //			   htmlItems - array for holding html items currently being used
 // 						   by this current ride
-function createTextAndButtons(output, email, ref, type, htmlItems, column) {
+function createTextAndButtons(output, email, ref, type, htmlItems, column, ts) {
 	var div = document.createElement("div");
 	div.setAttribute("style", "background-color:powderblue;");
 	var para = document.createElement("p");
@@ -453,12 +475,12 @@ function createTextAndButtons(output, email, ref, type, htmlItems, column) {
 	div.appendChild(updateButton);
 	div.appendChild(completeButton);
 	div.appendChild(cancelButton);
+	div.setAttribute("id", ts);
 	column.appendChild(div);
 	if (type === "pending") {
 		completeButton.disabled = true;
 	}
 	return div;
-	//checkReorder(type);
 }
 
 // Notifies the user that their ride has arrived
@@ -595,6 +617,7 @@ function updateAction(email, ref, textField, completeButton) {
 		user.once("value", function(snapshot) {
 			var email = snapshot.val().email;
 			var ts = snapshot.val().timestamp;
+			document.getElementById(ts).remove();
 			firebase.database().ref().child("CANCELLED RIDES").child(email + "_" + ts).once("value", function(snap) { 
 				if (!snap.hasChildren()) { // for checking if the ride cancelled already (duplicate ride bug)
 					if (snapshot.val().waitTime == "1000") {
@@ -702,32 +725,8 @@ function cancelAction(email, ref, type) {
 				vehicle: snapshot.val().vehicle,
 			});
 			user.remove();
-			checkReorder(type);
 		});
 	} else {
 		// Do nothing
 	}
-}
-
-// NO LONGER NEEDED BECAUSE OF COLUMNS
-// Moves the active ride list down (if need be) by creating and removing dummy 
-// data in the firebase database.
-// Parameters: type - string to determine if the ride is pending or active
-function checkReorder(type) {
-	if (type === "pending") {
-		var activeRidesRef = firebase.database().ref().child("ACTIVE RIDES");
-		activeRidesRef.child("update").set({
-			email: "update"
-		});
-		activeRidesRef.child("update").remove();
-	}
-}
-
-// Removes all of the html items in the given array (htmlItems)
-// from the document and clears the array.
-function reset(htmlItems, column) {
-	htmlItems.forEach(function(entry) {
-		column.removeChild(entry);
-	});
-	htmlItems.length = 0;
 }
