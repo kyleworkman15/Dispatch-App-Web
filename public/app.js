@@ -373,6 +373,7 @@ function constructActiveRides(ref, column, logs, log) {
 		snapshot.forEach(function(child) {
 			var email = child.child("email").val();
 			var endTime = child.child("endTime").val();
+			var vehicle = child.child("vehicle").val();
 			if (endTime == "Cancelled by Dispatcher") {
 				document.getElementById(email).remove();
 				logs.push("- " + calculateETA(0) + ": " + email.replace(",", ".") + " - Cancelled by Dispatcher");
