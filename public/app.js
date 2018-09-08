@@ -332,8 +332,8 @@ function clearFields(fields) {
 function constructPendingRides(ref, column, logs, log) {
 	var pendingRidesRef = ref.child("PENDING RIDES");
 	pendingRidesRef.orderByChild("timestamp").on("value", function(snapshot) { 
-		var output = "";
 		snapshot.forEach(function(child) {
+			var output = "";
 			var email = child.child("email").val();
 			var endTime = child.child("endTime").val();
 			if (endTime == "Cancelled by Dispatcher") {
@@ -352,8 +352,8 @@ function constructPendingRides(ref, column, logs, log) {
 					"<b>Number of Riders: </b>"+child.child("numRiders").val() + "<br>" +
 					"<b>From: </b>"+child.child("start").val() + "<br>" +
 					"<b>To: </b>"+child.child("end").val();
-					var div = createTextAndButtons(output, email, pendingRidesRef, "pending", column);
-					output = "";
+					var div = createTextAndButtons(output, email, pendingRidesRef, "pending");
+					column.appendChild(div);
 				}
 			} 
 		});
@@ -369,8 +369,8 @@ function constructPendingRides(ref, column, logs, log) {
 function constructActiveRides(ref, column, logs, log) {
 	var activeRidesRef = ref.child("ACTIVE RIDES");
 	activeRidesRef.orderByChild("etaTimestamp").on("value", function(snapshot) {
-		var output = "";
 		snapshot.forEach(function(child) {
+			var output = "";
 			var email = child.child("email").val();
 			var endTime = child.child("endTime").val();
 			var vehicle = child.child("vehicle").val();
@@ -399,13 +399,24 @@ function constructActiveRides(ref, column, logs, log) {
 					if (vehicle != " ") {
 						output = output + "<br><b>Vehicle: </b>"+vehicle;
 					}
-					var token = child.child("token").val();
-					var div = createTextAndButtons(output, email, activeRidesRef, "active", column);
-					output = "";
+					var div = createTextAndButtons(output, email, activeRidesRef, "active");
 					var notify = document.createElement("BUTTON");
 					notify.innerHTML = "Notify";
 					notify.addEventListener("click", function() { notifyAction(ref, email, vehicle) });
 					div.appendChild(notify);
+					$(div).data('ts', child.child("etaTimestamp").val());
+					var isInserted = false;
+					rides = column.getElementsByTagName('div');
+					for (var i = 0; i < rides.length; i++) {
+						var ride = rides[i];
+						if ($(ride).data('ts') > $(div).data('ts')) {
+							column.insertBefore(div, ride);
+							isInserted = true;
+							i = rides.length;
+						}
+					} if (!isInserted) {
+						column.appendChild(div);
+					}
 				}
 			} 
 		});
@@ -438,9 +449,9 @@ function drawLogs(logs, column) {
 //			   email - current email of the ride
 //			   ref - reference to the firebase tree (pending or active)
 //			   type - string to determine if the ride is pending or active
-function createTextAndButtons(output, email, ref, type, column) {
+function createTextAndButtons(output, email, ref, type) {
 	var div = document.createElement("div");
-	div.setAttribute("style", "background-color:powderblue;");
+	div.setAttribute("class", "ride");
 	var para = document.createElement("p");
 	para.setAttribute("class", "nospace");
 	var textField = document.createElement("INPUT");
@@ -463,7 +474,6 @@ function createTextAndButtons(output, email, ref, type, column) {
 	div.appendChild(completeButton);
 	div.appendChild(cancelButton);
 	div.setAttribute("id", email);
-	column.appendChild(div);
 	if (type === "pending") {
 		completeButton.disabled = true;
 	}
@@ -496,7 +506,7 @@ function notifyAction(ref, email, vehicle) {
 								user.child("notify").remove();
 							} if (snapshot.child("etaTimestamp").val() != 1 || snapshot.child("vehicle").val() != vehicle) {
 								document.getElementById(email).remove();
-								user.update({"eta" : "On the Way!", "etaTimestamp" : 1, "vehicle" : vehicle});
+								user.update({"eta" : "On the Way!", "etaTimestamp" : 1, "vehicle" : vehicle, "waitTime" : "-"});
 							}
 						}
 					});
@@ -515,7 +525,7 @@ function notifyAction(ref, email, vehicle) {
 								user.child("notify").remove();
 							} if (snapshot.child("etaTimestamp").val() != 0 || snapshot.child("vehicle").val() != vehicle) {
 								document.getElementById(email).remove();
-								user.update({"eta" : "Here!", "etaTimestamp" : 0, "vehicle" : vehicle});
+								user.update({"eta" : "Here!", "etaTimestamp" : 0, "vehicle" : vehicle, "waitTime" : "-"});
 							}
 						}
 					});
