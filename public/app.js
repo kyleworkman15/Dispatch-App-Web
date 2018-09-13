@@ -275,6 +275,7 @@ function constructAddRide(ref) {
 		div.appendChild(document.createTextNode(" "));
 		fields.push(field);
 	});
+	fields[0].setAttribute("placeholder", "@augustana.edu");
 	addRide.innerHTML = "Add Ride";
 	addRide.addEventListener("click", function() { addRideAction(ref, fields) });
 	div.appendChild(addRide);
@@ -293,7 +294,8 @@ function enterAction(event, button) {
 // 			   fields - array of text fields
 function addRideAction(ref, fields) {
 	if (fields[0].value != "" && fields[1].value != "" && fields[2].value != "" && fields[3].value != "") {
-		var email = fields[0].value.replace(".", ",");
+		var email = fields[0].value + "@augustana.edu"
+		email = email.replace(".", ",");
 		var pendingRidesRef = ref.child("PENDING RIDES");
 		var date = new Date();
 		pendingRidesRef.child(email).set({ 
@@ -321,6 +323,7 @@ function clearFields(fields) {
 	fields.forEach(element => {
 		element.value = "";
 	});
+	fields[0].focus();
 }
 
 // Constructs the list of pending rides including the text,
@@ -617,7 +620,8 @@ function editAction(ref) {
 //			   completeButton - button used for completing a ride
 function updateAction(email, ref, textField, completeButton) {
 	var waitTime = textField.value;
-	if (waitTime !== "") {
+	var isNumber = /^\d+$/.test(waitTime);
+	if (waitTime !== "" && isNumber === true) {
 		var user = ref.child(email);
 		var nowDate = new Date();
 		var etaDate = new Date(nowDate.getTime() + (60000 * waitTime));
@@ -656,6 +660,8 @@ function updateAction(email, ref, textField, completeButton) {
 				}
 			});
 		});
+	} else {
+		alert("You must enter only numbers to update the wait time.");
 	}
 }
 
