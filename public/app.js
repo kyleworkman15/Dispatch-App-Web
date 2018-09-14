@@ -564,7 +564,7 @@ function notifyAction(ref, email, vehicle) {
 
 // 
 function editAction(ref) {
-	var stringvar2= '<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"><p><b>*Separate vehicles by line*<br><br>*Driver\'s name inside of parentheses () will NOT be sent*</b><br><br>Notification format: "Watch for the __________"<br><br>Current list of vehicles/drivers:</p><textarea id="list" rows="5" cols="30" style="resize: none;"></textarea></div></div></div>';
+	var stringvar2= '<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"><p><b>*Separate vehicles by line*<br><br>*Driver\'s name inside of parentheses () will NOT be sent*<br><br>Notification format:</b><br>"Watch for the __________"<br><br>Current list of vehicles/drivers:</p><textarea id="list" rows="5" cols="30" style="resize: none;"></textarea></div></div></div>';
 	var	popUpList2 = $(stringvar2);
 	$(popUpList2).dialog({
 		title: 'Edit Vehicles',
