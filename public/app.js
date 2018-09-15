@@ -275,11 +275,22 @@ function constructAddRide(ref) {
 		div.appendChild(document.createTextNode(" "));
 		fields.push(field);
 	});
+	fields[0].setAttribute("size", "30");
+	fields[3].setAttribute("size", "1");
 	fields[0].setAttribute("placeholder", "@augustana.edu");
+	fields[0].addEventListener("blur", function() { append(fields) });
 	addRide.innerHTML = "Add Ride";
 	addRide.addEventListener("click", function() { addRideAction(ref, fields) });
 	div.appendChild(addRide);
 	document.body.appendChild(div);
+}
+
+function append(fields) {
+	var value = fields[0].value + "";
+	console.log("here");
+	if (!value.includes("@augustana.edu") && value != "") {
+		fields[0].value = value + "@augustana.edu";
+	}
 }
 
 // Method for handeling the enter action when the enter key is pressed.
@@ -294,7 +305,7 @@ function enterAction(event, button) {
 // 			   fields - array of text fields
 function addRideAction(ref, fields) {
 	if (fields[0].value != "" && fields[1].value != "" && fields[2].value != "" && fields[3].value != "") {
-		var email = fields[0].value + "@augustana.edu"
+		var email = fields[0].value;
 		email = email.replace(".", ",");
 		var pendingRidesRef = ref.child("PENDING RIDES");
 		var date = new Date();
@@ -564,7 +575,7 @@ function notifyAction(ref, email, vehicle) {
 
 // 
 function editAction(ref) {
-	var stringvar2= '<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"><p><b>*Separate vehicles by line*<br><br>*Driver\'s name inside of parentheses () will NOT be sent*<br><br>Notification format:</b><br>"Watch for the __________"<br><br>Current list of vehicles/drivers:</p><textarea id="list" rows="5" cols="30" style="resize: none;"></textarea></div></div></div>';
+	var stringvar2= '<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"><p><b>*Separate vehicles by line*<br><br>*Driver\'s name inside of parentheses () will NOT be sent*<br><br>Notification format:</b><br>OTW: "Watch for the __________"<br>Here: "Hop in the __________"<br><br>Current list of vehicles/drivers:</p><textarea id="list" rows="5" cols="30" style="resize: none;"></textarea></div></div></div>';
 	var	popUpList2 = $(stringvar2);
 	$(popUpList2).dialog({
 		title: 'Edit Vehicles',
