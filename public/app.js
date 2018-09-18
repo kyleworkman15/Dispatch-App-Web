@@ -6,6 +6,7 @@
 
 // Global Variables
 var options = ["white ACES vehicle", "tan medical car", "#26 ACES van"]; //Example
+var logSize = 50;
 
 // Wait for page to finish loading.
 document.addEventListener("DOMContentLoaded", event => {
@@ -307,6 +308,9 @@ function addRideAction(ref, fields) {
 	if (fields[0].value != "" && fields[1].value != "" && fields[2].value != "" && fields[3].value != "") {
 		var email = fields[0].value;
 		email = email.replace(".", ",");
+		if (!email.includes("@augustana,edu")) {
+			email = email + "@augustana,edu";
+		}
 		var pendingRidesRef = ref.child("PENDING RIDES");
 		var date = new Date();
 		pendingRidesRef.child(email).set({ 
@@ -445,16 +449,17 @@ function drawLogs(logs, column) {
 		column.removeChild(column.lastChild);
 	}
 	var output = "";
-	var stop = 0;
 	var size = logs.length;
-	if (size > 50) { // 50 is length of shown logs
-		stop = size - 50;
+	if (size > logSize) {
+		logs.shift();
+		size = size - 1;
 	}
-	for (var i = size - 1; i >= stop; --i) {
+	for (var i = size - 1; i >= 0; --i) {
 		output = output + logs[i] + "</br>";
 	}
 	var para = document.createElement("p");
 	para.innerHTML = output;
+	para.setAttribute("style", "background-color:rgb(238, 221, 255)");
 	column.appendChild(para);
 }
 
@@ -465,7 +470,6 @@ function drawLogs(logs, column) {
 //			   type - string to determine if the ride is pending or active
 function createTextAndButtons(output, email, ref, type) {
 	var div = document.createElement("div");
-	div.setAttribute("class", "ride");
 	var para = document.createElement("p");
 	para.setAttribute("class", "nospace");
 	var textField = document.createElement("INPUT");
@@ -490,6 +494,9 @@ function createTextAndButtons(output, email, ref, type) {
 	div.setAttribute("id", email);
 	if (type === "pending") {
 		completeButton.disabled = true;
+		div.setAttribute("class", "pending");
+	} else {
+		div.setAttribute("class", "active");
 	}
 	return div;
 }
