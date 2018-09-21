@@ -24,7 +24,7 @@
     <!-- initialize the SDK after all desired features are loaded -->
     <script>
       // Initialize Firebase
-      var config = {
+      var configFB = {
         apiKey: "AIzaSyDUqQnGX_oZrUXCRwxETyY6DpTa90I4mZ8",
         authDomain: "augustana-aces.firebaseapp.com",
         databaseURL: "https://augustana-aces.firebaseio.com",
@@ -32,7 +32,7 @@
         storageBucket: "augustana-aces.appspot.com",
         messagingSenderId: "691410651327"
       };
-      firebase.initializeApp(config);
+      firebase.initializeApp(configFB);
     </script>
 
     <meta http-equiv="Cache-Control" content="no-cache, no-store" />
@@ -72,6 +72,21 @@
       .user {
         color: red;
       }
+      .map {
+        height: 750px;
+        width: 100%;  
+        margin-top: 1%;
+       }
+      .container {
+        top: 0%;
+        padding-right: 1%;
+        position: absolute;
+        width: 100%;
+        display: table;
+      }
+      .topChild { display: table-row; }
+      .botChild { display: table-row; height: 100%; width: 100%; }
+
     </style>
     <link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css">
   </head>
@@ -90,5 +105,8 @@
     integrity="sha256-eGE6blurk5sHj+rmkfsGYeKyZx3M4bG+ZlFyA7Kns7E="
     crossorigin="anonymous"></script>
     <script src="app.js"></script>
+    <script async defer
+    src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDUqQnGX_oZrUXCRwxETyY6DpTa90I4mZ8">
+    </script>
   </body>
 </html>

@@ -5,8 +5,14 @@
 // for managing the Aces uber system accross campus. 
 
 // Global Variables
+var mainDiv = document.createElement("div");
+var topDiv = document.createElement("div");
+var botDiv = document.createElement("div");
 var options = ["white ACES vehicle", "tan medical car", "#26 ACES van"]; //Example
 var logSize = 50;
+var logs = [];
+var map;
+var markers = [];
 
 // Wait for page to finish loading.
 document.addEventListener("DOMContentLoaded", event => {
@@ -39,28 +45,46 @@ function correctLogin() {
 	var ref = firebase.database().ref();
 
 	removePreviousComponents();
-	var div = buildText();
+	document.body.appendChild(mainDiv);
+	mainDiv.setAttribute("class", "container");
+	mainDiv.appendChild(topDiv);
+	mainDiv.appendChild(botDiv);
+	topDiv.setAttribute("class", "topChild");
+	botDiv.setAttribute("class", "botChild");
+	buildText();
 
-	var logs = [];
-
-	constructStatus(ref, div);
-	constructExportEdit(ref);
-	constructAddRide(ref);
+	var right = document.createElement("div");
+	right.setAttribute("id", "right");
+	var left = document.createElement("div");
+	left.setAttribute("id", "left");
+	var log = document.createElement("div");
+	log.setAttribute("id", "log");
 
 	// construct the three columns
 	var row = document.createElement("div");
 	row.setAttribute("class", "row");
-	var left = document.createElement("div");
 	left.setAttribute("class", "column1");
-	var right = document.createElement("div");
 	right.setAttribute("class", "column1");
-	var log = document.createElement("div");
 	log.setAttribute("class", "column1");
 	row.appendChild(left);
 	row.appendChild(right);
 	row.appendChild(log);
-	document.body.appendChild(row);
 
+	var mapDiv = initMap();
+
+	constructExportEdit(ref, row, right, left, logs, log, mapDiv);
+	constructAddRide(ref);
+	botDiv.appendChild(row);
+
+	addHeaders(left, right, log);
+
+	constructPendingRides(ref, left, logs, log);
+	constructActiveRides(ref, right, logs, log);
+	constructVehicleListener(ref);
+}
+
+//
+function addHeaders(left, right, log) {
 	var pendingHeader = document.createElement("p");
 	pendingHeader.innerHTML = "<h2>Pending Rides: (Ordered by Arrival)</h2><br>";
 	pendingHeader.setAttribute("class", "middle");
@@ -73,10 +97,6 @@ function correctLogin() {
 	logHeader.innerHTML = "<h2>Log:</h2></br>";
 	logHeader.setAttribute("class", "middle");
 	log.appendChild(logHeader);
-
-	constructPendingRides(ref, left, logs, log);
-	constructActiveRides(ref, right, logs, log);
-	constructVehicleListener(ref);
 }
 
 //IN PROGRESS
@@ -100,23 +120,21 @@ function removePreviousComponents() {
 // Adds the text for the title and status indicator.
 function buildText() {
 	var title = document.createElement("p");
-	document.body.appendChild(title);
+	topDiv.appendChild(title);
 	title.innerHTML = "<h1>Aces Dispatcher App</h1>";
 	title.style.textAlign = "left";
 	title.style.cssFloat = "left";
-	var div = document.createElement("div");
-	var statusText = document.createElement("b");
-	statusText.innerHTML = "<h3>Status: </h3>";
-	div.style.cssFloat = "right";
-	div.appendChild(statusText);
-	document.body.appendChild(div);
-	return div;
+	title.style.marginBottom = "0%";
+	title.style.marginRight = "0%";
 }
 
 // Constructs the status indicator button to toggle the Aces service
 // on and off.
 // Parameters: ref - reference to the firebase database
 function constructStatus(ref, div) {
+	var statusText = document.createElement("b");
+	statusText.innerHTML = "<h3>Status: </h3>";
+	div.appendChild(statusText);
 	var status = document.createElement("BUTTON");
 	status.addEventListener("click", function() { toggleStatus(ref); });
 	div.appendChild(status);
@@ -129,7 +147,7 @@ function constructStatus(ref, div) {
 			status.innerHTML = "OFFLINE";
 			status.style.background = "#ff0000";
 		}
-	})
+	});
 }
 
 // Toggles the status of the database on and off.
@@ -157,14 +175,14 @@ function toggleStatus(ref) {
 
 // Constructs the buttons needed for exporting data editing vehicles.
 // Parameters: ref - reference to the firebase database
-function constructExportEdit(ref) {
+function constructExportEdit(ref, row, right, left, logs, log, mapDiv) {
 	var div = document.createElement("div");
-	div.style.textAlign = "center";
+	div.style.textAlign = "right";
 	var finish = document.createElement("BUTTON");
 	finish.innerHTML = "Finish session and download spreadsheet";
 	finish.style.cssFloat = "center";
 	finish.addEventListener("click", function() { exportAction(ref) });
-	document.body.appendChild(div);
+	topDiv.appendChild(div);
 	var edit = document.createElement("BUTTON");
 	edit.innerHTML = "Edit Vehicles";
 	edit.style.cssFloat = "center";
@@ -173,6 +191,107 @@ function constructExportEdit(ref) {
 	div.appendChild(finish);
 	div.appendChild(document.createTextNode(" "));
 	div.appendChild(edit);
+	var switcher = document.createElement("BUTTON");
+	switcher.innerHTML = "Map View";
+	switcher.addEventListener("click", function() { switchView(switcher, ref, row, right, left, logs, log, mapDiv) });
+	div.appendChild(document.createTextNode(" "));
+	div.appendChild(switcher);
+	div.appendChild(document.createTextNode(" "));
+	constructStatus(ref, div);
+}
+
+//
+function switchView(switcher, ref, row, right, left, logs, log, mapDiv) {
+	if (switcher.innerHTML === "Map View") {
+		switcher.innerHTML = "List View";
+		console.log("switching to map");
+		// Hide List
+		right.innerHTML = "";
+		left.innerHTML = "";
+		log.innerHTML = "";
+		right.remove();
+		left.remove();
+		log.remove();
+		row.remove();
+		// Show Map
+		botDiv.appendChild(mapDiv);
+	} else {
+		switcher.innerHTML = "Map View";
+		console.log("switching to list");
+		// Hide Map
+		mapDiv.remove();
+		var augieCoords = {lat: 41.505199, lng: -90.550674};
+		map.setZoom(15);
+		map.setCenter(augieCoords);
+		for (var i = 0; i < markers.length; i ++) {
+			markers[i].setMap(null);
+		}
+		// Show List
+		row.appendChild(left);
+		row.appendChild(right);
+		row.appendChild(log);
+		botDiv.appendChild(row);
+		addHeaders(left, right, log);
+		ref.child("PENDING RIDES").once("value", function(snapshot) {
+			snapshot.forEach(function(child) {
+				var output = "";
+				var email = child.child("email").val();
+				output = output + "<b>Email: </b>"+email.replace(",", ".") + "<br>" +
+				"<b>Time: </b>"+child.child("time").val() + "<br>" +
+				"<b>Number of Riders: </b>"+child.child("numRiders").val() + "<br>" +
+				"<b>From: </b>"+child.child("start").val() + "<br>" +
+				"<b>To: </b>"+child.child("end").val();
+				var div = createTextAndButtons(output, email, ref.child("PENDING RIDES"), "pending");
+				left.appendChild(div);
+			});
+		});
+		ref.child("ACTIVE RIDES").once("value", function(snapshot) {
+			snapshot.forEach(function(child) {
+				var output = "";
+				var email = child.child("email").val();
+				output = output + "<b>Email: </b>"+email.replace(",", ".") + "<br>" +
+				"<b>Time: </b>"+child.child("time").val() + "<br>" +
+				"<b>Number of Riders: </b>"+child.child("numRiders").val() + "<br>" +
+				"<b>From: </b>"+child.child("start").val() + "<br>" +
+				"<b>To: </b>"+child.child("end").val() + "<br>" +
+				"<b>Current Wait Time: </b>"+child.child("waitTime").val() + "<br>" +
+				"<b>ETA: </b>"+child.child("eta").val();
+				var vehicle = child.child("vehicle").val();
+				if (vehicle != " ") {
+					output = output + "<br><b>Vehicle: </b>"+vehicle;
+				}
+				var div = createTextAndButtons(output, email, ref.child("ACTIVE RIDES"), "active");
+				var notify = document.createElement("BUTTON");
+				notify.innerHTML = "Notify";
+				notify.addEventListener("click", function() { notifyAction(ref, email, vehicle) });
+				div.appendChild(notify);
+				$(div).data('ts', child.child("etaTimestamp").val());
+				var isInserted = false;
+				rides = right.getElementsByTagName('div');
+				for (var i = 0; i < rides.length; i++) {
+					var ride = rides[i];
+					if ($(ride).data('ts') > $(div).data('ts')) {
+						right.insertBefore(div, ride);
+						isInserted = true;
+						i = rides.length;
+					}
+				} if (!isInserted) {
+					right.appendChild(div);
+				}
+			});
+		});
+		drawLogs(logs, log);
+	}
+}
+
+function initMap() {
+	var mapDiv = document.createElement("div");
+	mapDiv.setAttribute("class", "map");
+	var augieCoords = {lat: 41.505199, lng: -90.550674};
+	map = new google.maps.Map(mapDiv, {zoom: 15, center: augieCoords});
+	var marker = new google.maps.Marker({position: augieCoords, map: map});
+	markers.push(marker);
+	return mapDiv;
 }
 
 // Method for handeling the export to CSV file when the button is clicked.
@@ -183,12 +302,14 @@ function exportAction(ref) {
 	exportMove(completed, "COMPLETED");
 	exportMove(cancelled, "CANCELLED");
 	cleanUp(ref);
+	var flagRef = ref.child("STATUS");
+	flagRef.update({"FLAG" : "OFF"});
+	flagRef.update({"MESSAGE" : ""});
 }
 
 // Clean database, anything older than 90 days
 function cleanUp(ref) {
 	var cutoff = new Date().getTime() - 7776000000; //7776000000 is 90 days in milliseconds
-	console.log(cutoff);
 	var oldCancelled = ref.child("ARCHIVED").child("CANCELLED").orderByChild("timestamp").endAt(cutoff);
 	var oldCompleted = ref.child("ARCHIVED").child("COMPLETED").orderByChild("timestamp").endAt(cutoff);
 	oldCancelled.once("value", function(snapshot) {
@@ -251,7 +372,7 @@ function exportToCSV(data, type) {
 	var date = new Date();
 	var dateString = date.getMonth() + "-" + date.getDay() + "-" + date.getFullYear() + "_" + calculateETA(0)
 	link.setAttribute("download", type + "_" + dateString + ".csv");
-	document.body.appendChild(link);
+	mainDiv.appendChild(link);
 	link.click();
 }
 
@@ -263,6 +384,7 @@ function constructAddRide(ref) {
 	div.style.alignContent = "left";
 	var title = document.createElement("p");
 	title.innerHTML = "<h2>Add a ride:</h2>";
+	title.style.cssFloat = "center";
 	div.appendChild(title);
 	var texts = ["Email: ", "Start: ", "End: ", "Number of Riders: "];
 	var fields = [];
@@ -283,12 +405,11 @@ function constructAddRide(ref) {
 	addRide.innerHTML = "Add Ride";
 	addRide.addEventListener("click", function() { addRideAction(ref, fields) });
 	div.appendChild(addRide);
-	document.body.appendChild(div);
+	topDiv.appendChild(div);
 }
 
 function append(fields) {
-	var value = fields[0].value + "";
-	console.log("here");
+	var value = fields[0].value + "";	
 	if (!value.includes("@augustana.edu") && value != "") {
 		fields[0].value = value + "@augustana.edu";
 	}
@@ -350,31 +471,33 @@ function clearFields(fields) {
 function constructPendingRides(ref, column, logs, log) {
 	var pendingRidesRef = ref.child("PENDING RIDES");
 	pendingRidesRef.orderByChild("timestamp").on("value", function(snapshot) { 
-		snapshot.forEach(function(child) {
-			var output = "";
-			var email = child.child("email").val();
-			var endTime = child.child("endTime").val();
-			if (endTime == "Cancelled by Dispatcher") {
-				document.getElementById(email).remove();
-				logs.push("- " + calculateETA(0) + ": " + email.replace(",", ".") + " - Cancelled by Dispatcher");
-				drawLogs(logs, log);
-			} else if (endTime == "Cancelled by User") {
-				document.getElementById(email).remove();
-				logs.push("<span class=user>" + "- " + calculateETA(0) +  ": " + email.replace(",", ".") + " - Cancelled by User</span>");
-				drawLogs(logs, log);
-			} else if (child.child("waitTime").val() != null) {
-				if (!document.body.contains(document.getElementById(email))) {
-					var email = child.child("email").val();
-					output = output + "<b>Email: </b>"+email.replace(",", ".") + "<br>" +
-					"<b>Time: </b>"+child.child("time").val() + "<br>" +
-					"<b>Number of Riders: </b>"+child.child("numRiders").val() + "<br>" +
-					"<b>From: </b>"+child.child("start").val() + "<br>" +
-					"<b>To: </b>"+child.child("end").val();
-					var div = createTextAndButtons(output, email, pendingRidesRef, "pending");
-					column.appendChild(div);
-				}
-			} 
-		});
+		if (column.innerHTML != "") {
+			snapshot.forEach(function(child) {
+				var output = "";
+				var email = child.child("email").val();
+				var endTime = child.child("endTime").val();
+				if (endTime == "Cancelled by Dispatcher") {
+					document.getElementById(email).remove();
+					logs.push("- " + calculateETA(0) + ": " + email.replace(",", ".") + " - Cancelled by Dispatcher");
+					drawLogs(logs, log);
+				} else if (endTime == "Cancelled by User") {
+					document.getElementById(email).remove();
+					logs.push("<span class=user>" + "- " + calculateETA(0) +  ": " + email.replace(",", ".") + " - Cancelled by User</span>");
+					drawLogs(logs, log);
+				} else if (child.child("waitTime").val() != null) {
+					if (!mainDiv.contains(document.getElementById(email))) {
+						var email = child.child("email").val();
+						output = output + "<b>Email: </b>"+email.replace(",", ".") + "<br>" +
+						"<b>Time: </b>"+child.child("time").val() + "<br>" +
+						"<b>Number of Riders: </b>"+child.child("numRiders").val() + "<br>" +
+						"<b>From: </b>"+child.child("start").val() + "<br>" +
+						"<b>To: </b>"+child.child("end").val();
+						var div = createTextAndButtons(output, email, pendingRidesRef, "pending");
+						column.appendChild(div);
+					}
+				} 
+			});
+		}
 	});
 }
 
@@ -387,57 +510,59 @@ function constructPendingRides(ref, column, logs, log) {
 function constructActiveRides(ref, column, logs, log) {
 	var activeRidesRef = ref.child("ACTIVE RIDES");
 	activeRidesRef.orderByChild("etaTimestamp").on("value", function(snapshot) {
-		snapshot.forEach(function(child) {
-			var output = "";
-			var email = child.child("email").val();
-			var endTime = child.child("endTime").val();
-			var vehicle = child.child("vehicle").val();
-			if (endTime == "Cancelled by Dispatcher") {
-				document.getElementById(email).remove();
-				logs.push("- " + calculateETA(0) + ": " + email.replace(",", ".") + " - Cancelled by Dispatcher");
-				drawLogs(logs, log);
-			} else if (endTime == "Cancelled by User") {
-				document.getElementById(email).remove();
-				logs.push("<span class=user>" + "- " + calculateETA(0) + ": " + email.replace(",", ".") + " - Cancelled by User</span>");
-				drawLogs(logs, log);
-			} else if (endTime != null && endTime.includes("M")) {
-				document.getElementById(email).remove();
-				logs.push("- " + calculateETA(0) + ": " + email.replace(",", ".") + " - Completed");
-				drawLogs(logs, log);
-			} else {
-				if (!document.body.contains(document.getElementById(email))) {
-					output = output + "<b>Email: </b>"+email.replace(",", ".") + "<br>" +
-					"<b>Time: </b>"+child.child("time").val() + "<br>" +
-					"<b>Number of Riders: </b>"+child.child("numRiders").val() + "<br>" +
-					"<b>From: </b>"+child.child("start").val() + "<br>" +
-					"<b>To: </b>"+child.child("end").val() + "<br>" +
-					"<b>Current Wait Time: </b>"+child.child("waitTime").val() + "<br>" +
-					"<b>ETA: </b>"+child.child("eta").val();
-					var vehicle = child.child("vehicle").val();
-					if (vehicle != " ") {
-						output = output + "<br><b>Vehicle: </b>"+vehicle;
-					}
-					var div = createTextAndButtons(output, email, activeRidesRef, "active");
-					var notify = document.createElement("BUTTON");
-					notify.innerHTML = "Notify";
-					notify.addEventListener("click", function() { notifyAction(ref, email, vehicle) });
-					div.appendChild(notify);
-					$(div).data('ts', child.child("etaTimestamp").val());
-					var isInserted = false;
-					rides = column.getElementsByTagName('div');
-					for (var i = 0; i < rides.length; i++) {
-						var ride = rides[i];
-						if ($(ride).data('ts') > $(div).data('ts')) {
-							column.insertBefore(div, ride);
-							isInserted = true;
-							i = rides.length;
+		if (column.innerHTML != "") {
+			snapshot.forEach(function(child) {
+				var output = "";
+				var email = child.child("email").val();
+				var endTime = child.child("endTime").val();
+				var vehicle = child.child("vehicle").val();
+				if (endTime == "Cancelled by Dispatcher") {
+					document.getElementById(email).remove();
+					logs.push("- " + calculateETA(0) + ": " + email.replace(",", ".") + " - Cancelled by Dispatcher");
+					drawLogs(logs, log);
+				} else if (endTime == "Cancelled by User") {
+					document.getElementById(email).remove();
+					logs.push("<span class=user>" + "- " + calculateETA(0) + ": " + email.replace(",", ".") + " - Cancelled by User</span>");
+					drawLogs(logs, log);
+				} else if (endTime != null && endTime.includes("M")) {
+					document.getElementById(email).remove();
+					logs.push("- " + calculateETA(0) + ": " + email.replace(",", ".") + " - Completed");
+					drawLogs(logs, log);
+				} else {
+					if (!mainDiv.contains(document.getElementById(email))) {
+						output = output + "<b>Email: </b>"+email.replace(",", ".") + "<br>" +
+						"<b>Time: </b>"+child.child("time").val() + "<br>" +
+						"<b>Number of Riders: </b>"+child.child("numRiders").val() + "<br>" +
+						"<b>From: </b>"+child.child("start").val() + "<br>" +
+						"<b>To: </b>"+child.child("end").val() + "<br>" +
+						"<b>Current Wait Time: </b>"+child.child("waitTime").val() + "<br>" +
+						"<b>ETA: </b>"+child.child("eta").val();
+						var vehicle = child.child("vehicle").val();
+						if (vehicle != " ") {
+							output = output + "<br><b>Vehicle: </b>"+vehicle;
 						}
-					} if (!isInserted) {
-						column.appendChild(div);
+						var div = createTextAndButtons(output, email, activeRidesRef, "active");
+						var notify = document.createElement("BUTTON");
+						notify.innerHTML = "Notify";
+						notify.addEventListener("click", function() { notifyAction(ref, email, vehicle) });
+						div.appendChild(notify);
+						$(div).data('ts', child.child("etaTimestamp").val());
+						var isInserted = false;
+						rides = column.getElementsByTagName('div');
+						for (var i = 0; i < rides.length; i++) {
+							var ride = rides[i];
+							if ($(ride).data('ts') > $(div).data('ts')) {
+								column.insertBefore(div, ride);
+								isInserted = true;
+								i = rides.length;
+							}
+						} if (!isInserted) {
+							column.appendChild(div);
+						}
 					}
-				}
-			} 
-		});
+				} 
+			});
+		}
 	});
 }
 
