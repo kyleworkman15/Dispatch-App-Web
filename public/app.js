@@ -13,6 +13,8 @@ var logSize = 50;
 var logs = [];
 var map;
 var markers = [];
+var startLocation = "";
+var endLocation = "";
 
 // Wait for page to finish loading.
 document.addEventListener("DOMContentLoaded", event => {
@@ -75,6 +77,8 @@ function correctLogin() {
 	constructExportEdit(ref, row, right, left, logs, log, mapDiv);
 	constructAddRide(ref);
 	botDiv.appendChild(row);
+	
+	var database = constructLocationDatabase();
 
 	addHeaders(left, right, log);
 
@@ -410,6 +414,8 @@ function constructAddRide(ref) {
 	fields[3].setAttribute("size", "1");
 	fields[0].setAttribute("placeholder", "@augustana.edu");
 	fields[0].addEventListener("blur", function() { append(fields) });
+	fields[1].setAttribute("id", "start");
+	fields[2].setAttribute("id", "end");
 	addRide.innerHTML = "Add Ride";
 	addRide.addEventListener("click", function() { addRideAction(ref, fields) });
 	div.appendChild(addRide);
@@ -427,7 +433,10 @@ function append(fields) {
 // Parameters: button - the button to be clicked when the enter key is pressed
 function enterAction(event, button) {
 	event.preventDefault();
-	if (event.keyCode === 13) { button.click() };
+	if (event.keyCode === 13) { 
+		document.activeElement.blur();
+		button.click();
+	}
 }
 
 // Method for handeling the add ride action from the add ride button.
@@ -437,9 +446,6 @@ function addRideAction(ref, fields) {
 	if (fields[0].value != "" && fields[1].value != "" && fields[2].value != "" && fields[3].value != "") {
 		var email = fields[0].value;
 		email = email.replace(".", ",");
-		if (!email.includes("@augustana,edu")) {
-			email = email + "@augustana,edu";
-		}
 		var pendingRidesRef = ref.child("PENDING RIDES");
 		var date = new Date();
 		pendingRidesRef.child(email).set({ 
@@ -893,4 +899,76 @@ function cancelAction(email, ref, type) {
 	} else {
 		// Do nothing
 	}
+}
+
+function constructLocationDatabase() {
+	var map = new Map();
+	map.set("Abbey Art Studios", [41.505297, -90.551476]);
+	map.set("ALDI", [41.491941, -90.548270]);
+    map.set("Anderson/Bartholomew", [41.502361, -90.551381]);
+    map.set("Andreen Hall", [41.501657, -90.548496]);
+    map.set("Arbaugh TLA", [41.499354, -90.552103]);
+    map.set("Brodahl", [41.502800, -90.552291]);
+    map.set("Carver Center", [41.506636, -90.550844]);
+    map.set("Centennial Hall", [41.505123, -90.548681]);
+    map.set("College Center", [41.504351, -90.548201]);
+    map.set("Denkmann", [41.504425, -90.550528]);
+    map.set("11th Ave Flats", [41.499988, -90.548975]);
+    map.set("Erickson Hall", [41.499363, -90.554705]);
+    map.set("Evald", [41.505108, -90.550090]);
+    map.set("Gerber Center", [41.502285, -90.550688]);
+    map.set("Hanson", [41.503561, -90.551447]);
+    map.set("Naeseth TLA", [41.499284, -90.553739]);
+    map.set("Old Main", [41.504344, -90.549497]);
+    map.set("Olin", [41.503118, -90.550591]);
+    map.set("Parkander North", [41.501175, -90.549681]);
+    map.set("Parkander South", [41.500545, -90.549934]);
+    map.set("PepsiCo Recreation", [41.500332, -90.556294]);
+    map.set("Pottery Studio", [41.505721, -90.550474]);
+    map.set("Seminary Hall", [41.503043, -90.548144]);
+    map.set("Swanson Commons", [41.500638, -90.548042]);
+    map.set("Sorensen", [41.505139, -90.547201]);
+    map.set("Swenson Geoscience", [41.503030, -90.549075]);
+	map.set("Westerlin Hall", [41.500495, -90.554667]);
+	$( "#start" ).autocomplete({
+		source: function(request, response) {
+			var matcher = new RegExp("^" + $.ui.autocomplete.escapeRegex(request.term), "i");
+			response($.grep(Array.from(map.keys()), function(item){
+				return matcher.test(item);
+			}) );
+		},
+		minLength: 0,
+		change: function(event, ui) {
+			if (ui.item) {
+				console.log(ui.item);
+				startLocation = ui.item.label;
+				console.log("Start" + startLocation);
+			} else {
+				console.log("parse address");
+				startLocation = this.value;
+				console.log("Start" + startLocation);
+			}
+		}
+	  });
+	$( "#end" ).autocomplete({
+		source: function(request, response) {
+			var matcher = new RegExp("^" + $.ui.autocomplete.escapeRegex(request.term), "i");
+			response($.grep(Array.from(map.keys()), function(item){
+				return matcher.test(item);
+			}) );
+		},
+		minLength: 0,
+		change: function(event, ui) {
+			if (ui.item) {
+				console.log(ui.item);
+				endLocation = ui.item.label;
+				console.log("End" + endLocation);
+			} else {
+				console.log("parse address");
+				endLocation = this.value;
+				console.log("End" + endLocation);
+			}
+		}
+	  });
+	return map;
 }

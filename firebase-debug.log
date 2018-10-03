@@ -1,0 +1,82 @@
+[debug] [2018-09-25T14:36:39.375Z] ----------------------------------------------------------------------
+[debug] [2018-09-25T14:36:39.379Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\kawor\AppData\Roaming\npm\node_modules\firebase-tools\bin\firebase serve
+[debug] [2018-09-25T14:36:39.380Z] CLI Version:   3.19.3
+[debug] [2018-09-25T14:36:39.380Z] Platform:      win32
+[debug] [2018-09-25T14:36:39.380Z] Node Version:  v6.11.5
+[debug] [2018-09-25T14:36:39.381Z] Time:          Tue Sep 25 2018 09:36:39 GMT-0500 (Central Daylight Time)
+[debug] [2018-09-25T14:36:39.381Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2018-09-25T14:36:39.409Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2018-09-25T14:36:39.410Z] > authorizing via signed-in user
+[debug] [2018-09-25T14:36:39.414Z] > refreshing access token with scopes: ["email","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","openid"]
+[debug] [2018-09-25T14:36:39.414Z] >>> HTTP REQUEST POST https://www.googleapis.com/oauth2/v3/token  
+ { refresh_token: '1/w6N48OE0roxJZoLsqC9m0Xf9Q5-dNvNbUGdWyT5RZc0',
+  client_id: '563584335869-fgrhgmd47bqnekij5i8b5pr03ho849e6.apps.googleusercontent.com',
+  client_secret: 'j9iVZfS8kkCEFUPaAeJV0sAi',
+  grant_type: 'refresh_token',
+  scope: 'email https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/cloudplatformprojects.readonly https://www.googleapis.com/auth/firebase openid' } 
+ Tue Sep 25 2018 09:36:39 GMT-0500 (Central Daylight Time)
+[debug] [2018-09-25T14:36:39.673Z] <<< HTTP RESPONSE 200
+[debug] [2018-09-25T14:36:39.681Z] >>> HTTP REQUEST GET https://admin.firebase.com/v1/projects/augustana-aces  
+  
+ Tue Sep 25 2018 09:36:39 GMT-0500 (Central Daylight Time)
+[debug] [2018-09-25T14:36:40.559Z] <<< HTTP RESPONSE 200
+[debug] [2018-09-25T14:36:40.560Z] >>> HTTP REQUEST GET https://admin.firebase.com/v1/database/augustana-aces/tokens  
+  
+ Tue Sep 25 2018 09:36:40 GMT-0500 (Central Daylight Time)
+[debug] [2018-09-25T14:36:40.976Z] <<< HTTP RESPONSE 200
+[debug] [2018-09-25T14:36:40.977Z] >>> HTTP REQUEST GET https://cloudresourcemanager.googleapis.com/v1/projects/augustana-aces  
+  
+ Tue Sep 25 2018 09:36:40 GMT-0500 (Central Daylight Time)
+[debug] [2018-09-25T14:36:41.605Z] <<< HTTP RESPONSE 200
+[info] 
+[info] === Serving from 'C:\Users\kawor\Documents\GitHub\Dispatch-App-Web'...
+[info] 
+[debug] [2018-09-25T14:36:41.610Z] >>> HTTP REQUEST GET https://mobilesdk-pa.googleapis.com/v1/projects/691410651327/clients/_:getWebAppConfig  
+  
+ Tue Sep 25 2018 09:36:41 GMT-0500 (Central Daylight Time)
+[debug] [2018-09-25T14:36:42.055Z] <<< HTTP RESPONSE 200
+[info] i  hosting: Serving hosting files from: public
+[info] +  hosting: Local server: http://localhost:5000
+
+[debug] [2018-10-02T20:23:47.949Z] ----------------------------------------------------------------------
+[debug] [2018-10-02T20:23:47.952Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\kawor\AppData\Roaming\npm\node_modules\firebase-tools\bin\firebase serve
+[debug] [2018-10-02T20:23:47.952Z] CLI Version:   3.19.3
+[debug] [2018-10-02T20:23:47.953Z] Platform:      win32
+[debug] [2018-10-02T20:23:47.953Z] Node Version:  v6.11.5
+[debug] [2018-10-02T20:23:47.953Z] Time:          Tue Oct 02 2018 15:23:47 GMT-0500 (Central Daylight Time)
+[debug] [2018-10-02T20:23:47.953Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2018-10-02T20:23:47.980Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2018-10-02T20:23:47.981Z] > authorizing via signed-in user
+[debug] [2018-10-02T20:23:47.986Z] > refreshing access token with scopes: ["email","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","openid"]
+[debug] [2018-10-02T20:23:47.987Z] >>> HTTP REQUEST POST https://www.googleapis.com/oauth2/v3/token  
+ { refresh_token: '1/w6N48OE0roxJZoLsqC9m0Xf9Q5-dNvNbUGdWyT5RZc0',
+  client_id: '563584335869-fgrhgmd47bqnekij5i8b5pr03ho849e6.apps.googleusercontent.com',
+  client_secret: 'j9iVZfS8kkCEFUPaAeJV0sAi',
+  grant_type: 'refresh_token',
+  scope: 'email https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/cloudplatformprojects.readonly https://www.googleapis.com/auth/firebase openid' } 
+ Tue Oct 02 2018 15:23:47 GMT-0500 (Central Daylight Time)
+[debug] [2018-10-02T20:23:48.447Z] <<< HTTP RESPONSE 200
+[debug] [2018-10-02T20:23:48.455Z] >>> HTTP REQUEST GET https://admin.firebase.com/v1/projects/augustana-aces  
+  
+ Tue Oct 02 2018 15:23:48 GMT-0500 (Central Daylight Time)
+[debug] [2018-10-02T20:23:48.956Z] <<< HTTP RESPONSE 200
+[debug] [2018-10-02T20:23:48.957Z] >>> HTTP REQUEST GET https://admin.firebase.com/v1/database/augustana-aces/tokens  
+  
+ Tue Oct 02 2018 15:23:48 GMT-0500 (Central Daylight Time)
+[debug] [2018-10-02T20:23:49.310Z] <<< HTTP RESPONSE 200
+[debug] [2018-10-02T20:23:49.312Z] >>> HTTP REQUEST GET https://cloudresourcemanager.googleapis.com/v1/projects/augustana-aces  
+  
+ Tue Oct 02 2018 15:23:49 GMT-0500 (Central Daylight Time)
+[debug] [2018-10-02T20:23:49.802Z] <<< HTTP RESPONSE 200
+[info] 
+[info] === Serving from 'C:\Users\kawor\Documents\GitHub\Dispatch-App-Web'...
+[info] 
+[debug] [2018-10-02T20:23:49.806Z] >>> HTTP REQUEST GET https://mobilesdk-pa.googleapis.com/v1/projects/691410651327/clients/_:getWebAppConfig  
+  
+ Tue Oct 02 2018 15:23:49 GMT-0500 (Central Daylight Time)
+[debug] [2018-10-02T20:23:50.432Z] <<< HTTP RESPONSE 200
+[info] i  hosting: Serving hosting files from: public
+[info] +  hosting: Local server: http://localhost:5000
+
