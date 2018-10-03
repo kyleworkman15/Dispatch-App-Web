@@ -80,3 +80,31 @@
 [info] i  hosting: Serving hosting files from: public
 [info] +  hosting: Local server: http://localhost:5000
 
+[debug] [2018-10-03T17:36:19.950Z] ----------------------------------------------------------------------
+[debug] [2018-10-03T17:36:19.952Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\kawor\AppData\Roaming\npm\node_modules\firebase-tools\bin\firebase serve
+[debug] [2018-10-03T17:36:19.952Z] CLI Version:   4.2.1
+[debug] [2018-10-03T17:36:19.952Z] Platform:      win32
+[debug] [2018-10-03T17:36:19.952Z] Node Version:  v8.11.4
+[debug] [2018-10-03T17:36:19.953Z] Time:          Wed Oct 03 2018 12:36:19 GMT-0500 (Central Daylight Time)
+[debug] [2018-10-03T17:36:19.953Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2018-10-03T17:36:19.971Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2018-10-03T17:36:19.972Z] > authorizing via signed-in user
+[debug] [2018-10-03T17:36:19.975Z] > refreshing access token with scopes: ["email","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","openid"]
+[debug] [2018-10-03T17:36:19.976Z] >>> HTTP REQUEST POST https://www.googleapis.com/oauth2/v3/token  
+
+[debug] [2018-10-03T17:36:20.162Z] <<< HTTP RESPONSE 200
+[debug] [2018-10-03T17:36:20.177Z] >>> HTTP REQUEST GET https://admin.firebase.com/v1/projects/augustana-aces  
+ 
+[debug] [2018-10-03T17:36:20.520Z] <<< HTTP RESPONSE 200
+[debug] [2018-10-03T17:36:20.521Z] >>> HTTP REQUEST GET https://cloudresourcemanager.googleapis.com/v1/projects/augustana-aces  
+ 
+[debug] [2018-10-03T17:36:20.686Z] <<< HTTP RESPONSE 200
+[info] 
+[info] === Serving from 'C:\Users\kawor\Documents\GitHub\Dispatch-App-Web'...
+[info] 
+[debug] [2018-10-03T17:36:20.692Z] >>> HTTP REQUEST GET https://mobilesdk-pa.googleapis.com/v1/projects/691410651327/clients/_:getWebAppConfig  
+ 
+[debug] [2018-10-03T17:36:21.029Z] <<< HTTP RESPONSE 200
+[info] i  hosting[augustana-aces]: Serving hosting files from: public
+[info] +  hosting[augustana-aces]: Local server: http://localhost:5000

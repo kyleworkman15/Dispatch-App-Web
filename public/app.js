@@ -160,16 +160,18 @@ function toggleStatus(ref) {
 	var flagRef = ref.child("STATUS");
 	flagRef.once("value", function(snapshot) {
 		if (snapshot.val().FLAG === "ON") {
-			var message = prompt("Custom status message (leave blank or press cancel for no custom status message):", "");
-			if (message === null || message === "") {
-				message = "";
-			} else {
-				var date = new Date()
-				stringDate = (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + calculateETA(0)
-				message = stringDate + "\n" + message
-			}
-			flagRef.update({"MESSAGE" : message});
-			flagRef.update({"FLAG" : "OFF"});
+			var message = prompt("Custom status message (leave blank and press 'OK' for no custom status message):", "");
+			if (message != null) {
+				if (message === "") {
+					message = "";
+				} else {
+					var date = new Date()
+					stringDate = (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + calculateETA(0)
+					message = stringDate + "\n" + message
+				}
+				flagRef.update({"MESSAGE" : message});
+				flagRef.update({"FLAG" : "OFF"});
+			} //else do not turn off
 		} else {
 			flagRef.update({"FLAG" : "ON"});
 			flagRef.update({"MESSAGE" : ""});
@@ -243,8 +245,8 @@ function switchView(switcher, ref, row, right, left, logs, log, mapDiv) {
 				output = output + "<b>Email: </b>"+email.replace(",", ".") + "<br>" +
 				"<b>Time: </b>"+child.child("time").val() + "<br>" +
 				"<b>Number of Riders: </b>"+child.child("numRiders").val() + "<br>" +
-				"<b>From: </b>"+child.child("start").val() + "<br>" +
-				"<b>To: </b>"+child.child("end").val();
+				"<b>Start: </b>"+child.child("start").val() + "<br>" +
+				"<b>End: </b>"+child.child("end").val();
 				var div = createTextAndButtons(output, email, ref.child("PENDING RIDES"), "pending");
 				left.appendChild(div);
 			});
@@ -256,8 +258,8 @@ function switchView(switcher, ref, row, right, left, logs, log, mapDiv) {
 				output = output + "<b>Email: </b>"+email.replace(",", ".") + "<br>" +
 				"<b>Time: </b>"+child.child("time").val() + "<br>" +
 				"<b>Number of Riders: </b>"+child.child("numRiders").val() + "<br>" +
-				"<b>From: </b>"+child.child("start").val() + "<br>" +
-				"<b>To: </b>"+child.child("end").val() + "<br>" +
+				"<b>Start: </b>"+child.child("start").val() + "<br>" +
+				"<b>End: </b>"+child.child("end").val() + "<br>" +
 				"<b>Current Wait Time: </b>"+child.child("waitTime").val() + "<br>" +
 				"<b>ETA: </b>"+child.child("eta").val();
 				var vehicle = child.child("vehicle").val();
@@ -373,7 +375,7 @@ function exportMove(ref, type) {
 // Parameters: data - the data as a 2D array to be exported to a CSV
 //     	 	   type - string to determine which type of rides (completed or cancelled)
 function exportToCSV(data, type) {
-	let csvContent = "data:text/csv;charset=utf-8,Email,From,To,Number of Riders,Time,Wait Time,ETA,End Time,Vehicle\r\n";
+	let csvContent = "data:text/csv;charset=utf-8,Email,Start,End,Number of Riders,Time,Wait Time,ETA,End Time,Vehicle\r\n";
 	data.forEach(function(rowArray) {
 		rowArray[0] = rowArray[0].replace(",", ".");
 		csvContent += rowArray.join(",") + "\r\n";
@@ -504,8 +506,8 @@ function constructPendingRides(ref, column, logs, log) {
 						output = output + "<b>Email: </b>"+email.replace(",", ".") + "<br>" +
 						"<b>Time: </b>"+child.child("time").val() + "<br>" +
 						"<b>Number of Riders: </b>"+child.child("numRiders").val() + "<br>" +
-						"<b>From: </b>"+child.child("start").val() + "<br>" +
-						"<b>To: </b>"+child.child("end").val();
+						"<b>Start: </b>"+child.child("start").val() + "<br>" +
+						"<b>End: </b>"+child.child("end").val();
 						var div = createTextAndButtons(output, email, pendingRidesRef, "pending");
 						column.appendChild(div);
 					}
@@ -547,8 +549,8 @@ function constructActiveRides(ref, column, logs, log) {
 						output = output + "<b>Email: </b>"+email.replace(",", ".") + "<br>" +
 						"<b>Time: </b>"+child.child("time").val() + "<br>" +
 						"<b>Number of Riders: </b>"+child.child("numRiders").val() + "<br>" +
-						"<b>From: </b>"+child.child("start").val() + "<br>" +
-						"<b>To: </b>"+child.child("end").val() + "<br>" +
+						"<b>Start: </b>"+child.child("start").val() + "<br>" +
+						"<b>End: </b>"+child.child("end").val() + "<br>" +
 						"<b>Current Wait Time: </b>"+child.child("waitTime").val() + "<br>" +
 						"<b>ETA: </b>"+child.child("eta").val();
 						var vehicle = child.child("vehicle").val();
@@ -942,11 +944,11 @@ function constructLocationDatabase() {
 			if (ui.item) {
 				console.log(ui.item);
 				startLocation = ui.item.label;
-				console.log("Start" + startLocation);
+				console.log("Start: " + startLocation);
 			} else {
 				console.log("parse address");
 				startLocation = this.value;
-				console.log("Start" + startLocation);
+				console.log("Start: " + startLocation);
 			}
 		}
 	  });
@@ -962,11 +964,11 @@ function constructLocationDatabase() {
 			if (ui.item) {
 				console.log(ui.item);
 				endLocation = ui.item.label;
-				console.log("End" + endLocation);
+				console.log("End: " + endLocation);
 			} else {
 				console.log("parse address");
 				endLocation = this.value;
-				console.log("End" + endLocation);
+				console.log("End: " + endLocation);
 			}
 		}
 	  });
