@@ -309,16 +309,18 @@ function exportAction(ref) {
 	exportMove(cancelled, "CANCELLED");
 	cleanUp(ref);
 	var flagRef = ref.child("STATUS");
-	var message = prompt("Custom status message (leave blank or press cancel for no custom status message):", "");
-	if (message === null || message === "") {
-		message = "";
-	} else {
-		var date = new Date()
-		stringDate = (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + calculateETA(0)
-		message = stringDate + "\n" + message
-	}
-	flagRef.update({"MESSAGE" : message});
-	flagRef.update({"FLAG" : "OFF"});
+	var message = prompt("Custom status message (leave blank and press 'OK' for no custom status message):", "");
+	if (message != null) {
+		if (message === "") {
+			message = "";
+		} else {
+			var date = new Date()
+			stringDate = (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + calculateETA(0)
+			message = stringDate + "\n" + message
+		}
+		flagRef.update({"MESSAGE" : message});			
+		flagRef.update({"FLAG" : "OFF"});		
+	} //else do not turn off
 }
 
 // Clean database, anything older than 90 days
