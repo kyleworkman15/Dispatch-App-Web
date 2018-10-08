@@ -510,7 +510,7 @@ function constructPendingRides(ref, column, logs, log) {
 						"<b>Number of Riders: </b>"+child.child("numRiders").val() + "<br>" +
 						"<b>Start: </b>"+child.child("start").val() + "<br>" +
 						"<b>End: </b>"+child.child("end").val();
-						var div = createTextAndButtons(output, email, pendingRidesRef, "pending");
+						var div = createTextAndButtons(output, email, pendingRidesRef, "pending", child.child("eta").val());
 						column.appendChild(div);
 					}
 				} 
@@ -559,7 +559,7 @@ function constructActiveRides(ref, column, logs, log) {
 						if (vehicle != " ") {
 							output = output + "<br><b>Vehicle: </b>"+vehicle;
 						}
-						var div = createTextAndButtons(output, email, activeRidesRef, "active");
+						var div = createTextAndButtons(output, email, activeRidesRef, "active", child.child("eta").val());
 						var notify = document.createElement("BUTTON");
 						notify.innerHTML = "Notify";
 						notify.addEventListener("click", function() { notifyAction(ref, email, vehicle) });
@@ -611,7 +611,8 @@ function drawLogs(logs, column) {
 //			   email - current email of the ride
 //			   ref - reference to the firebase tree (pending or active)
 //			   type - string to determine if the ride is pending or active
-function createTextAndButtons(output, email, ref, type) {
+//			   eta - eta to be checked for the complete button
+function createTextAndButtons(output, email, ref, type, eta) {
 	var div = document.createElement("div");
 	var para = document.createElement("p");
 	para.setAttribute("class", "nospace");
@@ -623,11 +624,15 @@ function createTextAndButtons(output, email, ref, type) {
 	textField.setAttribute("size", "1");
 	textField.setAttribute("type", "text");
 	updateButton.innerHTML = "Update";
-	completeButton.innerHTML = "Complete";
+	if (eta == "Picked Up") {
+		completeButton.innerHTML = "Complete";
+	} else {
+		completeButton.innerHTML = "Picked Up";
+	}
 	cancelButton.innerHTML = "Cancel";
 	textField.addEventListener("keyup", function(event){ enterAction(event, updateButton) });
 	updateButton.addEventListener("click", function() { updateAction(email, ref, textField, completeButton) });
-	completeButton.addEventListener("click", function() { completeAction(email, ref) });
+	completeButton.addEventListener("click", function() { completeAction(email, ref, completeButton) });
 	cancelButton.addEventListener("click", function() { cancelAction(email, ref, type) });
 	div.appendChild(para);
 	div.appendChild(textField);
@@ -852,27 +857,33 @@ function calculateETA(waitTime) {
 // Method for handeling the complete action from the complete button.
 // Parameters: email - current email of the ride
 // 			   ref - reference to the firebase tree (pending or active)
-function completeAction(email, ref) { 
-	var user = ref.child(email);
-	user.once("value", function(snapshot) {
-		var endTime = calculateETA(0);
-		var ts = snapshot.val().timestamp
-		user.update({"endTime" : endTime});
-		var completed = firebase.database().ref().child("COMPLETED RIDES");
-		completed.child(email + "_" + ts).set({
-			email: snapshot.val().email,
-			end: snapshot.val().end,
-			endTime: endTime,
-			eta: snapshot.val().eta,
-			numRiders: snapshot.val().numRiders,
-			start: snapshot.val().start,
-			time: snapshot.val().time,
-			timestamp: ts,
-			waitTime: snapshot.val().waitTime,
-			vehicle: snapshot.val().vehicle,
+function completeAction(email, ref, completeButton) { 
+	if (completeButton.innerHTML == "Complete") {
+		var user = ref.child(email);
+		user.once("value", function(snapshot) {
+			var endTime = calculateETA(0);
+			var ts = snapshot.val().timestamp
+			user.update({"endTime" : endTime});
+			var completed = firebase.database().ref().child("COMPLETED RIDES");
+			completed.child(email + "_" + ts).set({
+				email: snapshot.val().email,
+				end: snapshot.val().end,
+				endTime: endTime,
+				eta: snapshot.val().eta,
+				numRiders: snapshot.val().numRiders,
+				start: snapshot.val().start,
+				time: snapshot.val().time,
+				timestamp: ts,
+				waitTime: snapshot.val().waitTime,
+				vehicle: snapshot.val().vehicle,
+			});
+			user.remove();
 		});
-		user.remove();
-	});
+	} else {
+		var user = ref.child(email);
+		document.getElementById(email).remove();
+		user.update({"eta" : "Picked Up"});
+	}
 }
 
 // Method for handeling the cancel action from the cancel button.
