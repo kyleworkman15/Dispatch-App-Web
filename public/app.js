@@ -675,7 +675,7 @@ function notifyAction(ref, email, vehicle) {
 								user.child("notify").remove();
 							} if (snapshot.child("etaTimestamp").val() != 1 || snapshot.child("vehicle").val() != vehicle) {
 								document.getElementById(email).remove();
-								user.update({"eta" : "On the Way!", "etaTimestamp" : 1, "vehicle" : vehicle, "waitTime" : "-"});
+								user.update({"eta" : "On the Way!", "etaTimestamp" : 2, "vehicle" : vehicle, "waitTime" : "-"});
 							}
 						}
 					});
@@ -694,7 +694,7 @@ function notifyAction(ref, email, vehicle) {
 								user.child("notify").remove();
 							} if (snapshot.child("etaTimestamp").val() != 0 || snapshot.child("vehicle").val() != vehicle) {
 								document.getElementById(email).remove();
-								user.update({"eta" : "Here!", "etaTimestamp" : 0, "vehicle" : vehicle, "waitTime" : "-"});
+								user.update({"eta" : "Here!", "etaTimestamp" : 1, "vehicle" : vehicle, "waitTime" : "-"});
 							}
 						}
 					});
@@ -882,7 +882,7 @@ function completeAction(email, ref, completeButton) {
 	} else {
 		var user = ref.child(email);
 		document.getElementById(email).remove();
-		user.update({"eta" : "Picked Up"});
+		user.update({"eta" : "Picked Up", "etaTimestamp" : 0});
 	}
 }
 
