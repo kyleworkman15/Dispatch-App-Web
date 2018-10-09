@@ -15,6 +15,7 @@ var map;
 var markers = [];
 var startLocation = "";
 var endLocation = "";
+var sound;
 
 // Wait for page to finish loading.
 document.addEventListener("DOMContentLoaded", event => {
@@ -75,7 +76,7 @@ function correctLogin() {
 	var mapDiv = initMap();
 
 	constructExportEdit(ref, row, right, left, logs, log, mapDiv);
-	constructAddRide(ref);
+	constructAddRide(ref, mainDiv);
 	botDiv.appendChild(row);
 	
 	var database = constructLocationDatabase();
@@ -85,6 +86,7 @@ function correctLogin() {
 	constructPendingRides(ref, left, logs, log);
 	constructActiveRides(ref, right, logs, log, left);
 	constructVehicleListener(ref);
+	sound = new sound("Ping-sound.mp3");
 }
 
 //
@@ -403,7 +405,7 @@ function exportToCSV(data, type) {
 
 // Constructs the fields and buttons needed for adding a ride manually.
 // Parameters: ref - reference to the firebase database
-function constructAddRide(ref) {
+function constructAddRide(ref, mainDiv) {
 	var div = document.createElement("div");
 	div.style.textAlign = "center";
 	div.style.alignContent = "left";
@@ -430,7 +432,7 @@ function constructAddRide(ref) {
 	fields[1].setAttribute("id", "start");
 	fields[2].setAttribute("id", "end");
 	addRide.innerHTML = "Add Ride";
-	addRide.addEventListener("click", function() { addRideAction(ref, fields) });
+	addRide.addEventListener("click", function() { addRideAction(ref, fields, mainDiv) });
 	div.appendChild(addRide);
 	topDiv.appendChild(div);
 }
@@ -455,26 +457,30 @@ function enterAction(event, button) {
 // Method for handeling the add ride action from the add ride button.
 // Parameters: ref - reference to the firebase database
 // 			   fields - array of text fields
-function addRideAction(ref, fields) {
+function addRideAction(ref, fields, mainDiv) {
 	if (fields[0].value != "" && fields[1].value != "" && fields[2].value != "" && fields[3].value != "") {
-		var email = fields[0].value;
-		email = email.replace(".", ",");
-		var pendingRidesRef = ref.child("PENDING RIDES");
-		var date = new Date();
-		pendingRidesRef.child(email).set({ 
-			email: email,
-			end: fields[2].value,
-			endTime: " ",
-			eta: " ",
-			numRiders: fields[3].value,
-			start: fields[1].value,
-			time: (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + calculateETA(0),
-			timestamp: date.getTime(),
-			waitTime: 1000,
-			token: ",",
-			vehicle: " ",
-		});
-		clearFields(fields);
+		var email = fields[0].value.replace(".", ",");
+		console.log(email);
+		if (!mainDiv.contains(document.getElementById(email))) {
+			var pendingRidesRef = ref.child("PENDING RIDES");
+			var date = new Date();
+			pendingRidesRef.child(email).set({ 
+				email: email,
+				end: fields[2].value.replace(".", ""),
+				endTime: " ",
+				eta: " ",
+				numRiders: fields[3].value,
+				start: fields[1].value.replace(".", ""),
+				time: (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + calculateETA(0),
+				timestamp: date.getTime(),
+				waitTime: 1000,
+				token: ",",
+				vehicle: " ",
+			});
+			clearFields(fields);
+		} else {
+			alert(email.replace("@augustana,edu", "") + " already has a requested ride.");
+		}
 	} else {
 		alert("Please fill out all the fields when adding a ride.");
 	}
@@ -513,6 +519,7 @@ function constructPendingRides(ref, column, logs, log) {
 					drawLogs(logs, log);
 				} else if (child.child("waitTime").val() != null) {
 					if (!column.contains(document.getElementById(email))) {
+						sound.play();
 						var email = child.child("email").val();
 						output = output + "<b>Email: </b>"+email.replace(",", ".") + "<br>" +
 						"<b>Time: </b>"+child.child("time").val() + "<br>" +
@@ -1006,4 +1013,19 @@ function constructLocationDatabase() {
 		}
 	  });
 	return map;
+}
+
+function sound(src) {
+    this.sound = document.createElement("audio");
+    this.sound.src = src;
+    this.sound.setAttribute("preload", "auto");
+    this.sound.setAttribute("controls", "none");
+    this.sound.style.display = "none";
+    document.body.appendChild(this.sound);
+    this.play = function(){
+        this.sound.play();
+    }
+    this.stop = function(){
+        this.sound.pause();
+    }
 }
