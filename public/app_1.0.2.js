@@ -224,6 +224,7 @@ function switchView(switcher, ref, row, right, left, logs, log, mapDiv) {
 		row.remove();
 		// Show Map
 		botDiv.appendChild(mapDiv);
+		constructPendingRides(ref, left, logs, log);
 	} else {
 		switcher.innerHTML = "Map View";
 		console.log("switching to list");
@@ -306,8 +307,6 @@ function initMap() {
 	mapDiv.setAttribute("class", "map");
 	var augieCoords = {lat: 41.505199, lng: -90.550674};
 	map = new google.maps.Map(mapDiv, {zoom: 15, center: augieCoords});
-	var marker = new google.maps.Marker({position: augieCoords, map: map});
-	markers.push(marker);
 	return mapDiv;
 }
 
@@ -534,8 +533,18 @@ function constructPendingRides(ref, column, logs, log) {
 				} else if (endTime == "Cancelled by User") {
 					logs.push("<span class=user>" + "- " + calculateETA(0) +  ": " + email.replace(",", ".") + " - Cancelled by User</span>");
 				}
+				var startCoords = {lat: child.child("startLat").val(), lng: child.child("startLong").val()};
+				var markerStart = new google.maps.Marker({position: startCoords, map: map, icon: {
+					url: "http://maps.google.com/mapfiles/ms/icons/green-dot.png"
+				  }});
+				var endCoords = {lat: child.child("endLat").val(), lng: child.child("endLong").val()};
+				var markerEnd = new google.maps.Marker({position: endCoords, map: map, icon: {
+					url: "http://maps.google.com/mapfiles/ms/icons/red-dot.png"
+				  }});
+				markers.push(markerStart);
+				markers.push(markerEnd);
+				console.log("here");
 			});
-			// add pin to map
 		}
 	});
 }
