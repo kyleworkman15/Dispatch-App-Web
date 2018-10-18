@@ -9,6 +9,7 @@ var mainDiv = document.createElement("div");
 var topDiv = document.createElement("div");
 var botDiv = document.createElement("div");
 var options = ["white ACES vehicle", "tan medical car", "#26 ACES van"]; //Example
+var employees = [];
 var logSize = 50;
 var logs = [];
 var map;
@@ -83,6 +84,7 @@ function correctLogin() {
 
 	addHeaders(left, right, log);
 
+	constructEmployeesListener(ref);
 	constructPendingRides(ref, left, logs, log);
 	constructActiveRides(ref, right, logs, log, left);
 	constructVehicleListener(ref);
@@ -112,6 +114,16 @@ function constructVehicleListener(ref) {
 		options = [];
 		snapshot.forEach(function(child) {
 			options.push(child.val());
+		});
+	});
+}
+
+function constructEmployeesListener(ref) {
+	var employeesRef = ref.child("EMPLOYEES");
+	employeesRef.on("value", function(snapshot) {
+		employees = [];
+		snapshot.forEach(function(child) {
+			employees.push(child.val());
 		});
 	});
 }
@@ -195,12 +207,18 @@ function constructExportEdit(ref, row, right, left, logs, log, mapDiv) {
 	edit.innerHTML = "Edit Vehicles";
 	edit.style.cssFloat = "center";
 	edit.addEventListener("click", function() { editAction(ref) });
+	var editEmp = document.createElement("BUTTON");
+	editEmp.innerHTML = "Edit Employees";
+	editEmp.style.cssFloat = "center";
+	editEmp.addEventListener("click", function() { editEmpAction(ref) });
 	div.appendChild(document.createElement("p"));
 	div.appendChild(finish);
 	div.appendChild(document.createTextNode(" "));
+	div.appendChild(editEmp);
+	div.appendChild(document.createTextNode(" "));
 	div.appendChild(edit);
 	var switcher = document.createElement("BUTTON");
-	//switcher.disabled = true;
+	switcher.disabled = true;
 	switcher.innerHTML = "Map View";
 	switcher.addEventListener("click", function() { switchView(switcher, ref, row, right, left, logs, log, mapDiv) });
 	div.appendChild(document.createTextNode(" "));
@@ -412,7 +430,7 @@ function constructAddRide(ref, mainDiv) {
 		fields.push(field);
 	});
 	fields[0].setAttribute("size", "30");
-	fields[3].setAttribute("size", "1");
+	fields[3].setAttribute("size", "2");
 	fields[0].setAttribute("placeholder", "@augustana.edu");
 	fields[0].addEventListener("blur", function() { append(fields) });
 	fields[1].setAttribute("id", "start");
@@ -543,7 +561,6 @@ function constructPendingRides(ref, column, logs, log) {
 				  }});
 				markers.push(markerStart);
 				markers.push(markerEnd);
-				console.log("here");
 			});
 		}
 	});
@@ -670,7 +687,7 @@ function createTextAndButtons(output, email, ref, type, eta) {
 	var completeButton = document.createElement("BUTTON");
 	var cancelButton = document.createElement("BUTTON");
 	para.innerHTML = output;
-	textField.setAttribute("size", "1");
+	textField.setAttribute("size", "2");
 	textField.setAttribute("type", "text");
 	updateButton.innerHTML = "Update";
 	if (eta == "Picked Up") {
@@ -691,9 +708,17 @@ function createTextAndButtons(output, email, ref, type, eta) {
 	div.setAttribute("id", email);
 	if (type === "pending") {
 		completeButton.disabled = true;
-		div.setAttribute("class", "pending");
+		if (employees.includes(email.replace("@augustana,edu", ""))) {
+			div.setAttribute("class", "employee");
+		} else {
+			div.setAttribute("class", "pending");
+		}
 	} else {
-		div.setAttribute("class", "active");
+		if (employees.includes(email.replace("@augustana,edu", ""))) {
+			div.setAttribute("class", "employee");
+		} else {
+			div.setAttribute("class", "active");
+		}
 	}
 	return div;
 }
@@ -822,6 +847,60 @@ function editAction(ref) {
 	}
 	if (options.length > 0) {
 		output = output + options[options.length-1];
+	}
+	list.innerHTML = output;
+	$(popUpList2).parent().children().children('.ui-dialog-titlebar-close').hide();
+	$(popUpList2).dialog('open');
+}
+
+function editEmpAction(ref) {
+	var stringvar2= '<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"><p><b>*Separate employees by line*<br><br>*Only include first and last name with number of the employees email, no @augustana.edu*<br><br>Current list of employees:</p><textarea id="list2" rows="20" cols="30" style="resize: none;"></textarea></div></div></div>';
+	var	popUpList2 = $(stringvar2);
+	$(popUpList2).dialog({
+		title: 'Edit Employees',
+		resizable: false,
+		closeOnEscape: false,
+		modal: true,
+		autoOpen: false,
+		buttons: [ { 
+			text: "Confirm",
+			click: function() {
+				var employees = list.value;
+				if (!employees.includes(".")) {
+				var newEmployees = employees.split('\n');
+				var employeesRef = ref.child("EMPLOYEES");
+				employeesRef.once('value', function(snapshot) {
+					employeesRef.remove();
+					var count = 0;
+					for (var i = 0; i < newEmployees.length; i++) {
+						if (newEmployees[i] != "") {
+							employeesRef.update({[count] : newEmployees[i]});
+							count = count + 1;
+						}
+					}
+				});
+				$(this).dialog("close");
+				$(this).dialog('destroy').remove();
+				$(".ui-dialog-content").dialog("close");
+				$(".ui-dialog-content").dialog("destroy").remove();
+			} else {
+				alert("Please only fill with first name, last name and number. Do not include '@augustana.edu' or any periods.");
+			}
+			}}, {
+			text: "Cancel",
+			click: function() {
+				$(this).dialog("close");
+				$(this).dialog('destroy').remove();
+			}}
+		]
+	});
+	var list = document.getElementById("list2");
+	var output = "";
+	for (var i = 0; i < employees.length-1; i++) {
+		output = output + employees[i] + "\n";
+	}
+	if (employees.length > 0) {
+		output = output + employees[employees.length-1];
 	}
 	list.innerHTML = output;
 	$(popUpList2).parent().children().children('.ui-dialog-titlebar-close').hide();
