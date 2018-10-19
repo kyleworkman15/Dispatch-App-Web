@@ -95,7 +95,7 @@ function correctLogin() {
 
 function getWaitTime(ref) {
 	var estimatedWTRef = ref.child("EST WAIT TIME");
-	estimatedWTRef.once("value", function(snapshot) {
+	estimatedWTRef.on("value", function(snapshot) {
 		estimatedWT = Number(snapshot.child("estimatedWT").val());
 		if (estimatedWT != -1) {
 			document.getElementById("estimatedWTLbl").innerHTML = "<b>Estimated Wait Time Sent to Users: " + estimatedWT + " min. </b>"
@@ -661,7 +661,6 @@ function constructActiveRides(ref, column, logs, log, pendingColumn) {
 						estimatedWT = 5;
 					}
 					firebase.database().ref().child("EST WAIT TIME").update({"estimatedWT" : estimatedWT});
-					document.getElementById("estimatedWTLbl").innerHTML = "<b>Estimated Wait Time Sent to Users: " + estimatedWT + " min. </b>"; 
 				}
 			});
 		} else {
@@ -680,7 +679,6 @@ function constructActiveRides(ref, column, logs, log, pendingColumn) {
 		}
 		if (count == 0) {
 			firebase.database().ref().child("EST WAIT TIME").update({"estimatedWT" : 5});
-			document.getElementById("estimatedWTLbl").innerHTML = "<b>Estimated Wait Time Sent to Users: " + 5 + " min. </b>"; 
 		}
 	});
 }
