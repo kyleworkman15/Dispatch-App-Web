@@ -18,6 +18,7 @@ var startLocation = "";
 var endLocation = "";
 var sound;
 var estimatedWT = 0;
+var timer = setInterval(startTimer, 60000);
 
 // Wait for page to finish loading.
 document.addEventListener("DOMContentLoaded", event => {
@@ -592,6 +593,7 @@ function constructPendingRides(ref, column, logs, log) {
 function constructActiveRides(ref, column, logs, log, pendingColumn) {
 	var activeRidesRef = ref.child("ACTIVE RIDES");
 	activeRidesRef.orderByChild("etaTimestamp").on("value", function(snapshot) {
+		clearInterval(timer);
 		var count = 0;
 		if (column.innerHTML != "") {
 			var numChildren = snapshot.numChildren();
@@ -678,9 +680,20 @@ function constructActiveRides(ref, column, logs, log, pendingColumn) {
 			//add pin to map
 		}
 		if (count == 0) {
+			estimatedWT = 5;
 			firebase.database().ref().child("EST WAIT TIME").update({"estimatedWT" : 5});
 		}
+		timer = setInterval(startTimer, 60000);
 	});
+}
+
+function startTimer() {
+	estimatedWT = estimatedWT - 1;
+	if (estimatedWT <= 5) {
+		estimatedWT = 5
+		window.clearInterval(timer);
+	} 
+	firebase.database().ref().child("EST WAIT TIME").update({"estimatedWT" : estimatedWT});
 }
 
 // Creates the log
