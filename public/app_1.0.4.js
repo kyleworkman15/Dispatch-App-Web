@@ -17,6 +17,7 @@ var markers = [];
 var startLocation = "";
 var endLocation = "";
 var sound;
+var estimatedWT = 0;
 
 // Wait for page to finish loading.
 document.addEventListener("DOMContentLoaded", event => {
@@ -84,11 +85,24 @@ function correctLogin() {
 
 	addHeaders(left, right, log);
 
+	getWaitTime(ref);
 	constructEmployeesListener(ref);
 	constructPendingRides(ref, left, logs, log);
 	constructActiveRides(ref, right, logs, log, left);
 	constructVehicleListener(ref);
 	sound = new sound("Ping-sound.mp3");
+}
+
+function getWaitTime(ref) {
+	var estimatedWTRef = ref.child("EST WAIT TIME");
+	estimatedWTRef.once("value", function(snapshot) {
+		estimatedWT = Number(snapshot.child("estimatedWT").val());
+		if (estimatedWT != -1) {
+			document.getElementById("estimatedWTLbl").innerHTML = "<b>Estimated Wait Time Sent to Users: " + estimatedWT + " min. </b>"
+		} else {
+			document.getElementById("estimatedWTLbl").innerHTML = "<b>Estimated Wait Time Sent to Users: - min. </b>";
+		}
+	});
 }
 
 //
@@ -198,6 +212,9 @@ function toggleStatus(ref) {
 function constructExportEdit(ref, row, right, left, logs, log, mapDiv) {
 	var div = document.createElement("div");
 	div.style.textAlign = "right";
+	var estimatedWTLbl = document.createElement("p");
+	estimatedWTLbl.setAttribute("id", "estimatedWTLbl");
+	estimatedWTLbl.innerHTML = "<b>Estimated Wait Time Sent to Users: - min. </b>";
 	var finish = document.createElement("BUTTON");
 	finish.innerHTML = "Finish session and download spreadsheet";
 	finish.style.cssFloat = "center";
@@ -225,6 +242,7 @@ function constructExportEdit(ref, row, right, left, logs, log, mapDiv) {
 	div.appendChild(switcher);
 	div.appendChild(document.createTextNode(" "));
 	constructStatus(ref, div);
+	div.appendChild(estimatedWTLbl);
 }
 
 //
@@ -464,7 +482,6 @@ function enterAction(event, button) {
 function addRideAction(ref, fields, mainDiv) {
 	if (fields[0].value != "" && fields[1].value != "" && fields[2].value != "" && fields[3].value != "") {
 		var email = fields[0].value.replace(".", ",");
-		console.log(email);
 		if (!mainDiv.contains(document.getElementById(email))) {
 			var pendingRidesRef = ref.child("PENDING RIDES");
 			var date = new Date();
@@ -575,8 +592,11 @@ function constructPendingRides(ref, column, logs, log) {
 function constructActiveRides(ref, column, logs, log, pendingColumn) {
 	var activeRidesRef = ref.child("ACTIVE RIDES");
 	activeRidesRef.orderByChild("etaTimestamp").on("value", function(snapshot) {
+		var count = 0;
 		if (column.innerHTML != "") {
+			var numChildren = snapshot.numChildren();
 			snapshot.forEach(function(child) {
+				count = count + 1;
 				var output = "";
 				var email = child.child("email").val();
 				var endTime = child.child("endTime").val();
@@ -631,7 +651,18 @@ function constructActiveRides(ref, column, logs, log, pendingColumn) {
 							column.appendChild(div);
 						}
 					}
-				} 
+				}
+				if (count == numChildren) {
+					var etaTS = child.child("etaTimestamp").val();
+					var nowDate = new Date();
+					var newWT = (Number(etaTS) - nowDate.getTime()) / 60000;
+					estimatedWT =  Math.round(newWT) + 5;
+					if (estimatedWT < 0) {
+						estimatedWT = 5;
+					}
+					firebase.database().ref().child("EST WAIT TIME").update({"estimatedWT" : estimatedWT});
+					document.getElementById("estimatedWTLbl").innerHTML = "<b>Estimated Wait Time Sent to Users: " + estimatedWT + " min. </b>"; 
+				}
 			});
 		} else {
 			snapshot.forEach(function(child) {
@@ -646,6 +677,10 @@ function constructActiveRides(ref, column, logs, log, pendingColumn) {
 				} 
 			});
 			//add pin to map
+		}
+		if (count == 0) {
+			firebase.database().ref().child("EST WAIT TIME").update({"estimatedWT" : 5});
+			document.getElementById("estimatedWTLbl").innerHTML = "<b>Estimated Wait Time Sent to Users: " + 5 + " min. </b>"; 
 		}
 	});
 }
