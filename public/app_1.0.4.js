@@ -10,6 +10,7 @@ var topDiv = document.createElement("div");
 var botDiv = document.createElement("div");
 var options = ["white ACES vehicle", "tan medical car", "#26 ACES van"]; //Example
 var employees = [];
+var locations = [];
 var logSize = 50;
 var logs = [];
 var map;
@@ -19,6 +20,7 @@ var endLocation = "";
 var sound;
 var estimatedWT = 0;
 var timer = setInterval(startTimer, 60000);
+var geocoder;
 
 // Wait for page to finish loading.
 document.addEventListener("DOMContentLoaded", event => {
@@ -91,6 +93,7 @@ function correctLogin() {
 	constructPendingRides(ref, left, logs, log);
 	constructActiveRides(ref, right, logs, log, left);
 	constructVehicleListener(ref);
+	constructLocationsListener(ref);
 	sound = new sound("Ping-sound.mp3");
 }
 
@@ -139,6 +142,16 @@ function constructEmployeesListener(ref) {
 		employees = [];
 		snapshot.forEach(function(child) {
 			employees.push(child.val());
+		});
+	});
+}
+
+function constructLocationsListener(ref) {
+	var locationsRef = ref.child("LOCATIONS");
+	locationsRef.on("value", function(snapshot) {
+		locations = [];
+		snapshot.forEach(function(child) {
+			locations.push([child.child("name").val(), child.child("address").val(), child.child("lat").val(), child.child("long").val()]);
 		});
 	});
 }
@@ -221,20 +234,26 @@ function constructExportEdit(ref, row, right, left, logs, log, mapDiv) {
 	finish.style.cssFloat = "center";
 	finish.addEventListener("click", function() { exportAction(ref) });
 	topDiv.appendChild(div);
-	var edit = document.createElement("BUTTON");
-	edit.innerHTML = "Edit Vehicles";
-	edit.style.cssFloat = "center";
-	edit.addEventListener("click", function() { editAction(ref) });
+	var editVehicles = document.createElement("BUTTON");
+	editVehicles.innerHTML = "Edit Vehicles";
+	editVehicles.style.cssFloat = "center";
+	editVehicles.addEventListener("click", function() { editVehiclesAction(ref) });
 	var editEmp = document.createElement("BUTTON");
 	editEmp.innerHTML = "Edit Employees";
 	editEmp.style.cssFloat = "center";
 	editEmp.addEventListener("click", function() { editEmpAction(ref) });
+	var editLocations = document.createElement("BUTTON");
+	editLocations.innerHTML = "Edit Locations";
+	editLocations.style.cssFloat = "center";
+	editLocations.addEventListener("click", function() { editLocationsAction(ref) })
 	div.appendChild(document.createElement("p"));
 	div.appendChild(finish);
 	div.appendChild(document.createTextNode(" "));
 	div.appendChild(editEmp);
 	div.appendChild(document.createTextNode(" "));
-	div.appendChild(edit);
+	div.appendChild(editVehicles);
+	div.appendChild(document.createTextNode(" "));
+	div.appendChild(editLocations);
 	var switcher = document.createElement("BUTTON");
 	switcher.disabled = true;
 	switcher.innerHTML = "Map View";
@@ -344,6 +363,7 @@ function initMap() {
 	mapDiv.setAttribute("class", "map");
 	var augieCoords = {lat: 41.505199, lng: -90.550674};
 	map = new google.maps.Map(mapDiv, {zoom: 15, center: augieCoords});
+	geocoder = new google.maps.Geocoder();
 	return mapDiv;
 }
 
@@ -688,12 +708,12 @@ function constructActiveRides(ref, column, logs, log, pendingColumn) {
 }
 
 function startTimer() {
-	estimatedWT = estimatedWT - 1;
-	if (estimatedWT <= 5) {
-		estimatedWT = 5
-		window.clearInterval(timer);
-	} 
-	firebase.database().ref().child("EST WAIT TIME").update({"estimatedWT" : estimatedWT});
+// 	estimatedWT = estimatedWT - 1;
+// 	if (estimatedWT <= 5) {
+// 		estimatedWT = 5
+// 		window.clearInterval(timer);
+// 	} 
+// 	firebase.database().ref().child("EST WAIT TIME").update({"estimatedWT" : estimatedWT});
 }
 
 // Creates the log
@@ -828,7 +848,7 @@ function notifyAction(ref, email, vehicle) {
 				}}
 			]
 	});
-	$('#edit').click(function() { editAction(ref) });
+	$('#edit').click(function() { editVehiclesAction(ref) });
 	var selector = document.getElementById("dropdown");
 	for (var i = 0; i < options.length; i++) {
 		var option = document.createElement("option");
@@ -848,8 +868,119 @@ function notifyAction(ref, email, vehicle) {
 	$(popUpList).dialog('open');
 }
 
+function editLocationsAction(ref) {
+	var stringvar2= '<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"><p><b>Add Location:<br><br>Name (what will show in app):<br><input type="text" id="name"><br>Address (without Rock Island, IL):<br><input type="text" id="address"><br><br><button id="addLocation">Add</button><br><br>Select a location and click the "Remove" button to remove it.<br><br>Current list of locations:</p><table id="list3" style="width:100%"></table><br><button id="removeLocation">Remove</button></div></div></div>';
+	var	popUpList2 = $(stringvar2);
+	$(popUpList2).dialog({
+		title: 'Edit Locations',
+		resizable: false,
+		closeOnEscape: false,
+		modal: true,
+		autoOpen: false,
+		buttons: [ {
+			text: "OK",
+			click: function() {
+				$(this).dialog("close");
+				$(this).dialog('destroy').remove();
+			}}
+		]
+	});
+	//$('#name').addEventListener("keyup", function(event){ enterAction(event, $('#addLocation')) });
+	//$('#address').addEventListener("keyup", function(event){ enterAction(event, $('#addLocation')) });
+	$('#addLocation').click(function() { addLocation(ref) });
+	var tr;
+	var list = document.getElementById("list3");
+	for (var i = 0; i < locations.length; i++) {
+		var row = list.insertRow(i);
+		$(row).click(function(){
+			$(this).addClass('selected').siblings().removeClass('selected');    
+			tr = $(this).find('td:first').html();   
+			$('#removeLocation').click(function() { removeLocation(ref, tr) });
+		 });
+		var rowText = row.insertCell(0);
+		rowText.innerHTML = locations[i][0] + ": " + locations[i][1];
+	}
+	$(popUpList2).parent().children().children('.ui-dialog-titlebar-close').hide();
+	$(popUpList2).dialog('open');
+}
+
+getLatLong = function(name, address, f) {
+	geocoder.geocode( { 'address': address}, function(results, status) {
+		if (status == google.maps.GeocoderStatus.OK) {
+			latitude = results[0].geometry.location.lat();
+			longitude = results[0].geometry.location.lng();
+			f(name, address, latitude, longitude);
+			} else {
+				alert("Geocoding failed");
+			}
+		}); 
+}
+
+function addLocation(ref) {
+	var locationsRef = ref.child("LOCATIONS");
+	var name = $('#name').val();
+	var address = $('#address').val()
+	if (!address.toLowerCase().includes("Rock Island, IL")) {
+		address = address + " Rock Island, IL";
+	}
+	getLatLong(name, address, function(newName, newAddr, lat, long) {
+		locationsRef.child(locations.length).update({"name" : newName, "address" : newAddr.replace(" Rock Island, IL", ""), "lat" : lat, "long" : long});
+		var list = document.getElementById("list3");
+		list.innerHTML = "";
+		var tr;
+		for (var i = 0; i < locations.length; i++) {
+			var row = list.insertRow(i);
+			$(row).click(function(){
+				$(this).addClass('selected').siblings().removeClass('selected');    
+				tr = $(this).find('td:first').html();   
+				$('#removeLocation').click(function() { removeLocation(ref, tr) });
+			 });
+			var rowText = row.insertCell(0);
+			rowText.innerHTML = locations[i][0] + ": " + locations[i][1];
+		}
+		$('#name').val("");
+		$('#address').val("");
+		list3.scrollTop = list3.scrollHeight;
+	});
+}
+
+function removeLocation(ref, tr) {
+	var locationsRef = ref.child("LOCATIONS");
+	var list = document.getElementById("list3");
+	list.innerHTML = "";
+	var name = tr.split(": ");
+	for (var i = 0; i < locations.length; i++) {
+		if (name[0] == locations[i][0]) {
+			locationsRef.child(i).remove();
+		}
+	}
+	locationsRef.once('value', function(snapshot) {
+		var count = 0;
+		snapshot.forEach(function(child) {
+			var name = child.child("name").val();
+			var address = child.child("address").val();
+			var lat = child.child("lat").val();
+			var long = child.child("long").val();
+			locationsRef.child(child.key).remove();
+			locationsRef.child(count).update({"name" : name, "address" : address, "lat" : lat, "long" : long});
+			count = count + 1;
+		});
+		var tr;
+		for (var i = 0; i < locations.length; i++) {
+			var row = list.insertRow(i);
+			$(row).click(function(){
+				$(this).addClass('selected').siblings().removeClass('selected');    
+				tr = $(this).find('td:first').html();   
+				$('#removeLocation').click(function() { removeLocation(ref, tr) });
+			 });
+			var rowText = row.insertCell(0);
+			rowText.innerHTML = locations[i][0] + ": " + locations[i][1];
+		}
+	});
+}
+
 // 
-function editAction(ref) {
+function editVehiclesAction(ref) {
 	var stringvar2= '<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"><p><b>*Separate vehicles by line*<br><br>*Driver\'s name inside of parentheses () will NOT be sent*<br><br>Notification format:</b><br>OTW: "Watch for the __________"<br>Here: "Hop in the __________"<br><br>Current list of vehicles/drivers:</p><textarea id="list" rows="5" cols="30" style="resize: none;"></textarea></div></div></div>';
 	var	popUpList2 = $(stringvar2);
 	$(popUpList2).dialog({
