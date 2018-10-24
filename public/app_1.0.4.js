@@ -869,7 +869,7 @@ function notifyAction(ref, email, vehicle) {
 }
 
 function editLocationsAction(ref) {
-	var stringvar2= '<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"><p><b>Add Location:<br><br>Name (what will show in app):<br><input type="text" id="name"><br>Address (without Rock Island, IL):<br><input type="text" id="address"><br><br><button id="addLocation">Add</button><br><br>Select a location and click the "Remove" button to remove it.<br><br>Current list of locations:</p><table id="list3" style="width:100%"></table><br><button id="removeLocation">Remove</button></div></div></div>';
+	var stringvar2= '<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"><p><b>Add Location:<br><br>Name (what will show in app):<br><input type="text" id="name"><br>Address (without Rock Island, IL):<br><input type="text" id="address"><br><br><button id="addLocation">Add</button><br><br>Select a location and click the "Remove" button to remove it. Ensure the address is correct by clicking "Link" which will open a google maps view of the location.<br><br>Current list of locations:</p><table id="list3" style="width:100%"></table><br><button id="removeLocation">Remove</button></div></div></div>';
 	var	popUpList2 = $(stringvar2);
 	$(popUpList2).dialog({
 		title: 'Edit Locations',
@@ -885,9 +885,11 @@ function editLocationsAction(ref) {
 			}}
 		]
 	});
-	//$('#name').addEventListener("keyup", function(event){ enterAction(event, $('#addLocation')) });
-	//$('#address').addEventListener("keyup", function(event){ enterAction(event, $('#addLocation')) });
 	$('#addLocation').click(function() { addLocation(ref) });
+	var addressField = document.getElementById('address');
+	addressField.addEventListener("keyup", function(event){ enterAction(event, $('#addLocation')) });
+	var nameField = document.getElementById('name');
+	nameField.addEventListener("keyup", function(event){ enterAction(event, $('#addLocation')) });
 	var tr;
 	var list = document.getElementById("list3");
 	for (var i = 0; i < locations.length; i++) {
@@ -898,7 +900,12 @@ function editLocationsAction(ref) {
 			$('#removeLocation').click(function() { removeLocation(ref, tr) });
 		 });
 		var rowText = row.insertCell(0);
-		rowText.innerHTML = locations[i][0] + ": " + locations[i][1];
+		rowText.innerHTML = locations[i][0] + ": " + locations[i][1] + " ";
+		var link = document.createElement('a');
+		link.setAttribute("href", "https://www.google.com/maps/?q=" + locations[i][2] + "," + locations[i][3]);
+		link.setAttribute("target", "_blank");
+		link.appendChild(document.createTextNode("Link"));
+		rowText.appendChild(link);
 	}
 	$(popUpList2).parent().children().children('.ui-dialog-titlebar-close').hide();
 	$(popUpList2).dialog('open');
@@ -920,28 +927,48 @@ function addLocation(ref) {
 	var locationsRef = ref.child("LOCATIONS");
 	var name = $('#name').val();
 	var address = $('#address').val()
-	if (!address.toLowerCase().includes("Rock Island, IL")) {
-		address = address + " Rock Island, IL";
-	}
-	getLatLong(name, address, function(newName, newAddr, lat, long) {
-		locationsRef.child(locations.length).update({"name" : newName, "address" : newAddr.replace(" Rock Island, IL", ""), "lat" : lat, "long" : long});
-		var list = document.getElementById("list3");
-		list.innerHTML = "";
-		var tr;
-		for (var i = 0; i < locations.length; i++) {
-			var row = list.insertRow(i);
-			$(row).click(function(){
-				$(this).addClass('selected').siblings().removeClass('selected');    
-				tr = $(this).find('td:first').html();   
-				$('#removeLocation').click(function() { removeLocation(ref, tr) });
-			 });
-			var rowText = row.insertCell(0);
-			rowText.innerHTML = locations[i][0] + ": " + locations[i][1];
+	if (name == "" || address == "") {
+		alert("Please fill out both the name and address fields.");
+	} else if (inLocations(name)) {
+		alert("A location with that name already exists.");
+	} else {
+		if (!address.toLowerCase().includes("Rock Island, IL")) {
+			address = address + " Rock Island, IL";
 		}
-		$('#name').val("");
-		$('#address').val("");
-		list3.scrollTop = list3.scrollHeight;
-	});
+		getLatLong(name, address, function(newName, newAddr, lat, long) {
+			locationsRef.child(locations.length).update({"name" : newName, "address" : newAddr.replace(" Rock Island, IL", ""), "lat" : lat, "long" : long});
+			var list = document.getElementById("list3");
+			list.innerHTML = "";
+			var tr;
+			for (var i = 0; i < locations.length; i++) {
+				var row = list.insertRow(i);
+				$(row).click(function(){
+					$(this).addClass('selected').siblings().removeClass('selected');    
+					tr = $(this).find('td:first').html();  
+					$('#removeLocation').click(function() { removeLocation(ref, tr) });
+				 });
+				var rowText = row.insertCell(0);
+				rowText.innerHTML = locations[i][0] + ": " + locations[i][1] + " ";
+				var link = document.createElement('a');
+				link.setAttribute("href", "https://www.google.com/maps/?q=" + locations[i][2] + "," + locations[i][3]);
+				link.setAttribute("target", "_blank");
+				link.appendChild(document.createTextNode("Link"));
+				rowText.appendChild(link);
+			}
+			$('#name').val("");
+			$('#address').val("");
+			list3.scrollTop = list3.scrollHeight;
+		});
+	}
+}
+
+function inLocations(name) {
+	for (var i = 0; i < locations.length; i++) {
+		if (locations[i][0].toLowerCase() == name.toLowerCase()) {
+			return true;
+		}
+	}
+	return false;
 }
 
 function removeLocation(ref, tr) {
@@ -974,7 +1001,12 @@ function removeLocation(ref, tr) {
 				$('#removeLocation').click(function() { removeLocation(ref, tr) });
 			 });
 			var rowText = row.insertCell(0);
-			rowText.innerHTML = locations[i][0] + ": " + locations[i][1];
+			rowText.innerHTML = locations[i][0] + ": " + locations[i][1] + " ";
+			var link = document.createElement('a');
+			link.setAttribute("href", "https://www.google.com/maps/?q=" + locations[i][2] + "," + locations[i][3]);
+			link.setAttribute("target", "_blank");
+			link.appendChild(document.createTextNode("Link"));
+			rowText.appendChild(link);
 		}
 	});
 }

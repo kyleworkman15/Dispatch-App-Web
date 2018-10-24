@@ -54,3 +54,44 @@
 [debug] [2018-10-22T23:36:55.058Z] <<< HTTP RESPONSE 200
 [info] i  hosting[augustana-aces]: Serving hosting files from: public
 [info] +  hosting[augustana-aces]: Local server: http://localhost:5000
+[debug] [2018-10-23T19:27:49.302Z] ----------------------------------------------------------------------
+[debug] [2018-10-23T19:27:49.302Z] Command:       C:\Program Files\nodejs\node.exe C:\Users\kawor\AppData\Roaming\npm\node_modules\firebase-tools\bin\firebase serve
+[debug] [2018-10-23T19:27:49.302Z] CLI Version:   3.19.3
+[debug] [2018-10-23T19:27:49.302Z] Platform:      win32
+[debug] [2018-10-23T19:27:49.302Z] Node Version:  v6.11.5
+[debug] [2018-10-23T19:27:49.302Z] Time:          Tue Oct 23 2018 14:27:49 GMT-0500 (Central Daylight Time)
+[debug] [2018-10-23T19:27:49.302Z] ----------------------------------------------------------------------
+[debug] 
+[debug] [2018-10-23T19:27:49.335Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2018-10-23T19:27:49.339Z] > authorizing via signed-in user
+[debug] [2018-10-23T19:27:49.343Z] > refreshing access token with scopes: ["email","https://www.googleapis.com/auth/cloud-platform","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","openid"]
+[debug] [2018-10-23T19:27:49.343Z] >>> HTTP REQUEST POST https://www.googleapis.com/oauth2/v3/token  
+ { refresh_token: '1/w6N48OE0roxJZoLsqC9m0Xf9Q5-dNvNbUGdWyT5RZc0',
+  client_id: '563584335869-fgrhgmd47bqnekij5i8b5pr03ho849e6.apps.googleusercontent.com',
+  client_secret: 'j9iVZfS8kkCEFUPaAeJV0sAi',
+  grant_type: 'refresh_token',
+  scope: 'email https://www.googleapis.com/auth/cloud-platform https://www.googleapis.com/auth/cloudplatformprojects.readonly https://www.googleapis.com/auth/firebase openid' } 
+ Tue Oct 23 2018 14:27:49 GMT-0500 (Central Daylight Time)
+[debug] [2018-10-23T19:27:49.609Z] <<< HTTP RESPONSE 200
+[debug] [2018-10-23T19:27:49.621Z] >>> HTTP REQUEST GET https://admin.firebase.com/v1/projects/augustana-aces  
+  
+ Tue Oct 23 2018 14:27:49 GMT-0500 (Central Daylight Time)
+[debug] [2018-10-23T19:27:50.100Z] <<< HTTP RESPONSE 200
+[debug] [2018-10-23T19:27:50.104Z] >>> HTTP REQUEST GET https://admin.firebase.com/v1/database/augustana-aces/tokens  
+  
+ Tue Oct 23 2018 14:27:50 GMT-0500 (Central Daylight Time)
+[debug] [2018-10-23T19:27:50.430Z] <<< HTTP RESPONSE 200
+[debug] [2018-10-23T19:27:50.430Z] >>> HTTP REQUEST GET https://cloudresourcemanager.googleapis.com/v1/projects/augustana-aces  
+  
+ Tue Oct 23 2018 14:27:50 GMT-0500 (Central Daylight Time)
+[debug] [2018-10-23T19:27:50.795Z] <<< HTTP RESPONSE 200
+[info] 
+[info] === Serving from 'C:\Users\kawor\Documents\GitHub\Dispatch-App-Web'...
+[info] 
+[debug] [2018-10-23T19:27:50.803Z] >>> HTTP REQUEST GET https://mobilesdk-pa.googleapis.com/v1/projects/691410651327/clients/_:getWebAppConfig  
+  
+ Tue Oct 23 2018 14:27:50 GMT-0500 (Central Daylight Time)
+[debug] [2018-10-23T19:27:51.319Z] <<< HTTP RESPONSE 200
+[info] i  hosting: Serving hosting files from: public
+[info] +  hosting: Local server: http://localhost:5000
+
