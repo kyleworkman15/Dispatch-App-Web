@@ -900,7 +900,7 @@ function editLocationsAction(ref) {
 			$('#removeLocation').click(function() { removeLocation(ref, tr) });
 		 });
 		var rowText = row.insertCell(0);
-		rowText.innerHTML = locations[i][0] + ": " + locations[i][1] + " ";
+		rowText.innerHTML = locations[i][0] + " - ";
 		var link = document.createElement('a');
 		link.setAttribute("href", "https://www.google.com/maps/?q=" + locations[i][2] + "," + locations[i][3]);
 		link.setAttribute("target", "_blank");
@@ -948,7 +948,7 @@ function addLocation(ref) {
 					$('#removeLocation').click(function() { removeLocation(ref, tr) });
 				 });
 				var rowText = row.insertCell(0);
-				rowText.innerHTML = locations[i][0] + ": " + locations[i][1] + " ";
+				rowText.innerHTML = locations[i][0] + " - ";
 				var link = document.createElement('a');
 				link.setAttribute("href", "https://www.google.com/maps/?q=" + locations[i][2] + "," + locations[i][3]);
 				link.setAttribute("target", "_blank");
@@ -975,7 +975,7 @@ function removeLocation(ref, tr) {
 	var locationsRef = ref.child("LOCATIONS");
 	var list = document.getElementById("list3");
 	list.innerHTML = "";
-	var name = tr.split(": ");
+	var name = tr.split(" - ");
 	for (var i = 0; i < locations.length; i++) {
 		if (name[0] == locations[i][0]) {
 			locationsRef.child(i).remove();
@@ -1001,7 +1001,7 @@ function removeLocation(ref, tr) {
 				$('#removeLocation').click(function() { removeLocation(ref, tr) });
 			 });
 			var rowText = row.insertCell(0);
-			rowText.innerHTML = locations[i][0] + ": " + locations[i][1] + " ";
+			rowText.innerHTML = locations[i][0] + " - ";
 			var link = document.createElement('a');
 			link.setAttribute("href", "https://www.google.com/maps/?q=" + locations[i][2] + "," + locations[i][3]);
 			link.setAttribute("target", "_blank");
