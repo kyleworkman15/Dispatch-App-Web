@@ -869,7 +869,7 @@ function notifyAction(ref, email, vehicle) {
 }
 
 function editLocationsAction(ref) {
-	var stringvar2= '<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"><p><b>Add Location:<br><br>Name (what will show in app):<br><input type="text" id="name"><br>Address (without Rock Island, IL):<br><input type="text" id="address"><br><br><button id="addLocation">Add</button><br><br>Select a location and click the "Remove" button to remove it. Ensure the address is correct by clicking "Link" which will open a google maps view of the location.<br><br>Current list of locations:</p><table id="list3" style="width:100%"></table><br><button id="removeLocation">Remove</button></div></div></div>';
+	var stringvar2= '<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"><p><b>Add Location:<br><br>Name (what will show in app):<br><input type="text" id="name"><br>Address (without Rock Island, IL):<br><input type="text" id="address"><br><br><button id="addLocation">Add</button><br><br>Select a location and click the "Remove" button to remove it. Ensure the address is correct by clicking "Link" which will open a google maps view of the location.<br><br>Current list of locations:</p><table id="list3" style="width:100%"></table><br><button id="editLoc">Edit</button><button id="removeLocation" style="margin:5px;">Remove</button></div></div></div>';
 	var	popUpList2 = $(stringvar2);
 	$(popUpList2).dialog({
 		title: 'Edit Locations',
@@ -895,9 +895,12 @@ function editLocationsAction(ref) {
 	for (var i = 0; i < locations.length; i++) {
 		var row = list.insertRow(i);
 		$(row).click(function(){
+			$('#removeLocation').unbind();
+			$('#editLoc').unbind();
 			$(this).addClass('selected').siblings().removeClass('selected');    
 			tr = $(this).find('td:first').html();   
 			$('#removeLocation').click(function() { removeLocation(ref, tr) });
+			$('#editLoc').click(function() { editOneLocation(ref, tr) });
 		 });
 		var rowText = row.insertCell(0);
 		rowText.innerHTML = locations[i][0] + " ~ ";
@@ -929,6 +932,10 @@ function addLocation(ref) {
 	var address = $('#address').val()
 	if (name == "" || address == "") {
 		alert("Please fill out both the name and address fields.");
+	} else if ($('#addLocation').html() == "Save") {
+		$('#addLocation').html("Add");
+		removeLocation(ref, editingTR);
+		addLocation(ref);
 	} else if (inLocations(name)) {
 		alert("A location with that name already exists.");
 	} else {
@@ -943,9 +950,12 @@ function addLocation(ref) {
 			for (var i = 0; i < locations.length; i++) {
 				var row = list.insertRow(i);
 				$(row).click(function(){
+					$('#removeLocation').unbind();
+					$('#editLoc').unbind();
 					$(this).addClass('selected').siblings().removeClass('selected');    
 					tr = $(this).find('td:first').html();  
 					$('#removeLocation').click(function() { removeLocation(ref, tr) });
+					$('#editLoc').click(function() { editOneLocation(ref, tr) });
 				 });
 				var rowText = row.insertCell(0);
 				rowText.innerHTML = locations[i][0] + " ~ ";
@@ -996,9 +1006,12 @@ function removeLocation(ref, tr) {
 		for (var i = 0; i < locations.length; i++) {
 			var row = list.insertRow(i);
 			$(row).click(function(){
+				$('#removeLocation').unbind();
+				$('#editLoc').unbind();
 				$(this).addClass('selected').siblings().removeClass('selected');    
 				tr = $(this).find('td:first').html();   
 				$('#removeLocation').click(function() { removeLocation(ref, tr) });
+				$('#editLoc').click(function() { editOneLocation(ref, tr) });
 			 });
 			var rowText = row.insertCell(0);
 			rowText.innerHTML = locations[i][0] + " ~ ";
@@ -1009,6 +1022,20 @@ function removeLocation(ref, tr) {
 			rowText.appendChild(link);
 		}
 	});
+}
+
+var editingTR;
+function editOneLocation(ref, tr) {
+	var locationsRef = ref.child("LOCATIONS");
+	var name = tr.split(" ~ ");
+	for (var i = 0; i < locations.length; i++) {
+		if (name[0] == locations[i][0]) {
+			$('#name').val(name[0]);
+			$('#address').val(locations[i][1]);
+			$('#addLocation').html("Save");
+			editingTR = tr;
+		}
+	}
 }
 
 // 
