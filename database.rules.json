@@ -28,6 +28,12 @@
      },
       "STATUS": {
         ".read": "auth.token.email.contains('@augustana.edu')"
-      }
+     },
+      "EST WAIT TIME": {
+        ".read": "auth.token.email.contains('@augustana.edu')"
+     },
+       "LOCATIONS": {
+        ".read": "auth.token.email.contains('@augustana.edu')"
+     },
    }
 }
