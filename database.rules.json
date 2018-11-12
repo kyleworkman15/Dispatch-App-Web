@@ -35,5 +35,9 @@
        "LOCATIONS": {
         ".read": "auth.token.email.contains('@augustana.edu')"
      },
+       "$email": {
+         ".read": "auth.token.email.contains('@augustana.edu')",
+         ".write": "auth.token.email.contains('@augustana.edu')"
+     },
    }
 }

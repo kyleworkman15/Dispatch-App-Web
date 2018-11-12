@@ -1256,17 +1256,20 @@ function completeAction(email, ref, completeButton) {
 // 			   ref - reference to the firebase tree (pending or active)
 // 			   type - string to determine if the ride is pending or active
 function cancelAction(email, ref, type) { 
-	if (confirm('Are you sure you want to cancel this ride?')) {
+	var message = prompt("Cancel Ride: Put the reason as to why the ride was cancelled in the text field below; it will be sent to the user. A reason is not required.", "");
+	if (message != null) {
 		var user = ref.child(email);
 		user.once("value", function(snapshot) {
 			var ts = snapshot.val().timestamp
 			user.update({"endTime" : "Cancelled by Dispatcher"});
+			user.update({"message" : message});
 			var cancelled = firebase.database().ref().child("CANCELLED RIDES");
 			cancelled.child(email + "_" + ts).set({ 
 				email: snapshot.val().email,
 				end: snapshot.val().end,
 				endTime: "Cancelled by Dispatcher",
 				eta: snapshot.val().eta,
+				message: message,
 				numRiders: snapshot.val().numRiders,
 				start: snapshot.val().start,
 				time: snapshot.val().time,
@@ -1276,9 +1279,7 @@ function cancelAction(email, ref, type) {
 			});
 			user.remove();
 		});
-	} else {
-		// Do nothing
-	}
+	} //else do not cancel
 }
 
 function constructLocationDatabase() {
