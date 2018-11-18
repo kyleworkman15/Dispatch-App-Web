@@ -553,16 +553,16 @@ function constructPendingRides(ref, column, logs, log) {
 				var endTime = child.child("endTime").val();
 				var waitTime = child.child("waitTime").val();
 				if (endTime == "Cancelled by Dispatcher") {
-					document.getElementById(email).remove();
+					removeElement(email);
 					logs.push("- " + calculateETA(0) + ": " + email.replace(",", ".") + " - Cancelled by Dispatcher");
 					drawLogs(logs, log);
 				} else if (endTime == "Cancelled by User") {
-					document.getElementById(email).remove();
+					removeElement(email);
 					logs.push("<span class=user>" + "- " + calculateETA(0) +  ": " + email.replace(",", ".") + " - Cancelled by User</span>");
 					drawLogs(logs, log);
 				} else if (waitTime != null) {
 					if (waitTime != 1000) {
-						document.getElementById(email).remove();
+						removeElement(email);
 					} else if (!column.contains(document.getElementById(email))) {
 						var email = child.child("email").val();
 						output = output + "<b>Email: </b>"+email.replace(",", ".") + "<br>" +
@@ -624,20 +624,20 @@ function constructActiveRides(ref, column, logs, log, pendingColumn) {
 				var endTime = child.child("endTime").val();
 				var vehicle = child.child("vehicle").val();
 				if (endTime == "Cancelled by Dispatcher") {
-					document.getElementById(email).remove();
+					removeElement(email);
 					logs.push("- " + calculateETA(0) + ": " + email.replace(",", ".") + " - Cancelled by Dispatcher");
 					drawLogs(logs, log);
 				} else if (endTime == "Cancelled by User") {
-					document.getElementById(email).remove();
+					removeElement(email);
 					logs.push("<span class=user>" + "- " + calculateETA(0) + ": " + email.replace(",", ".") + " - Cancelled by User</span>");
 					drawLogs(logs, log);
 				} else if (endTime != null && endTime.includes("M")) {
-					document.getElementById(email).remove();
+					removeElement(email);
 					logs.push("- " + calculateETA(0) + ": " + email.replace(",", ".") + " - Completed");
 					drawLogs(logs, log);
 				} else {
 					if (child.child("waitTime").val() == "update" || child.child("eta").val() == "update") {
-						document.getElementById(email).remove();
+						removeElement(email);
 					} else if (!column.contains(document.getElementById(email))) {
 						output = output + "<b>Email: </b>"+email.replace(",", ".") + "<br>" +
 						"<b>Time: </b>"+child.child("time").val() + "<br>" +
@@ -705,6 +705,12 @@ function constructActiveRides(ref, column, logs, log, pendingColumn) {
 		}
 		timer = setInterval(startTimer, 60000);
 	});
+}
+
+function removeElement(email) {
+	if (document.getElementById(email) != null) {
+		document.getElementById(email).remove();
+	}
 }
 
 function startTimer() {
