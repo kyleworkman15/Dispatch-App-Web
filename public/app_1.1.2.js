@@ -229,6 +229,10 @@ function constructExportEdit(ref, row, right, left, logs, log, mapDiv) {
 	var estimatedWTLbl = document.createElement("p");
 	estimatedWTLbl.setAttribute("id", "estimatedWTLbl");
 	estimatedWTLbl.innerHTML = "<b>Estimated Wait Time Sent to Users: - min. </b>";
+	var getData = document.createElement("BUTTON");
+	getData.innerHTML = "Get Data";
+	getData.style.cssFloat = "center";
+	getData.addEventListener("click", function() { getDataAction(ref) });
 	var finish = document.createElement("BUTTON");
 	finish.innerHTML = "Finish session and download spreadsheet";
 	finish.style.cssFloat = "center";
@@ -247,6 +251,8 @@ function constructExportEdit(ref, row, right, left, logs, log, mapDiv) {
 	editLocations.style.cssFloat = "center";
 	editLocations.addEventListener("click", function() { editLocationsAction(ref) })
 	div.appendChild(document.createElement("p"));
+	div.appendChild(getData);
+	div.appendChild(document.createTextNode(" "));
 	div.appendChild(finish);
 	div.appendChild(document.createTextNode(" "));
 	div.appendChild(editEmp);
@@ -396,6 +402,63 @@ function cleanUp(ref) {
 	});
 }
 
+function getDataAction(ref) {
+	var stringvar = '<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"><p>Choose Export Dates</p><p>Start: <input type="text" id="datepicker1"></p><p>End: <input type="text" id="datepicker2"></p></div></div></div>';
+	var popUpList = $(stringvar);
+	$(popUpList).dialog({
+			title: 'Choose Export Dates',
+			width: 440,
+			resizable: false,
+			closeOnEscape: false,
+			modal: true,
+			autoOpen: false,
+			buttons: [ {
+				text: "Export", 
+				click: function() {
+					var cutoff = new Date().getTime() - 43200000; //43200000 is 12 hours in milliseconds
+					var oldCancelled = ref.child("ARCHIVED").child("CANCELLED").orderByChild("timestamp").startAt(cutoff);
+					var oldCompleted = ref.child("ARCHIVED").child("COMPLETED").orderByChild("timestamp").startAt(cutoff);
+					oldCancelled.once("value", function(snapshot) {
+						var data = new Array(snapshot.numChildren());
+						var index = 0;
+						snapshot.forEach(function(child) {
+							var values = child.val();
+							data[index] = new Array(values.email, values.start, values.end, values.numRiders, values.time, values.waitTime, values.eta, values.endTime, values.vehicle);
+							index++;
+						});
+						exportToCSV(data, "CANCELLED");
+					});
+					oldCompleted.once("value", function(snapshot) {
+						var data = new Array(snapshot.numChildren());
+						var index = 0;
+						snapshot.forEach(function(child) {
+							var values = child.val();
+							data[index] = new Array(values.email, values.start, values.end, values.numRiders, values.time, values.waitTime, values.eta, values.endTime, values.vehicle);
+							index++;
+						});
+						exportToCSV(data, "COMPLETED");
+					});
+					$(this).dialog("close");
+					$(this).dialog('destroy').remove();
+				}}, {
+				text: "Cancel", 
+				click: function() {
+					$(this).dialog("close");
+					$(this).dialog('destroy').remove()
+				}
+			}]
+	});
+	$("#datepicker1").datetimepicker({
+		timeFormat: "hh:mm tt",
+		showSecond: true,
+	});
+	$("#datepicker2").datetimepicker({
+		timeFormat: "hh:mm tt",
+	});
+	$(popUpList).parent().children().children('.ui-dialog-titlebar-close').hide();
+	$(popUpList).dialog('open');
+}
+
 // Method for moving the completed/cancelled rides to archived.
 // Parameters: ref - reference to the firebase database (completed or cancelled)
 // 			   type - string to determine which type to construct new tree under
@@ -513,7 +576,7 @@ function addRideAction(ref, fields, mainDiv) {
 				eta: " ",
 				numRiders: fields[3].value,
 				start: fields[1].value.replace(".", ""),
-				time: (date.getMonth() + 1) + "/" + date.getDate() + "/" + date.getFullYear() + " " + calculateETA(0),
+				time: date.getDate() + "/" + (date.getMonth() + 1) + "/" + date.getFullYear() + " " + calculateETA(0),
 				timestamp: date.getTime(),
 				waitTime: 1000,
 				token: ",",
@@ -561,9 +624,9 @@ function constructPendingRides(ref, column, logs, log) {
 					logs.push("<span class=user>" + "- " + calculateETA(0) +  ": " + email.replace(",", ".") + " - Cancelled by User</span>");
 					drawLogs(logs, log);
 				} else if (waitTime != null) {
-					if (waitTime != 1000) {
+					if (email != null && waitTime != 1000) {
 						removeElement(email);
-					} else if (!column.contains(document.getElementById(email))) {
+					} else if (email != null && !column.contains(document.getElementById(email))) {
 						var email = child.child("email").val();
 						output = output + "<b>Email: </b>"+email.replace(",", ".") + "<br>" +
 						"<b>Time: </b>"+child.child("time").val() + "<br>" +
@@ -636,9 +699,9 @@ function constructActiveRides(ref, column, logs, log, pendingColumn) {
 					logs.push("- " + calculateETA(0) + ": " + email.replace(",", ".") + " - Completed");
 					drawLogs(logs, log);
 				} else {
-					if (child.child("waitTime").val() == "update" || child.child("eta").val() == "update") {
+					if (email != null && child.child("waitTime").val() == "update" || child.child("eta").val() == "update") {
 						removeElement(email);
-					} else if (!column.contains(document.getElementById(email))) {
+					} else if (email != null && !column.contains(document.getElementById(email))) {
 						output = output + "<b>Email: </b>"+email.replace(",", ".") + "<br>" +
 						"<b>Time: </b>"+child.child("time").val() + "<br>" +
 						"<b>Number of Riders: </b>"+child.child("numRiders").val() + "<br>" +
