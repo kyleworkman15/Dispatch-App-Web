@@ -229,10 +229,10 @@ function constructExportEdit(ref, row, right, left, logs, log, mapDiv) {
 	var estimatedWTLbl = document.createElement("p");
 	estimatedWTLbl.setAttribute("id", "estimatedWTLbl");
 	estimatedWTLbl.innerHTML = "<b>Estimated Wait Time Sent to Users: - min. </b>";
-	var getData = document.createElement("BUTTON");
-	getData.innerHTML = "Get Data";
-	getData.style.cssFloat = "center";
-	getData.addEventListener("click", function() { getDataAction(ref) });
+	var exportRange = document.createElement("BUTTON");
+	exportRange.innerHTML = "Export Old Data";
+	exportRange.style.cssFloat = "center";
+	exportRange.addEventListener("click", function() { exportRangeAction(ref) });
 	var finish = document.createElement("BUTTON");
 	finish.innerHTML = "Finish session and download spreadsheet";
 	finish.style.cssFloat = "center";
@@ -251,9 +251,9 @@ function constructExportEdit(ref, row, right, left, logs, log, mapDiv) {
 	editLocations.style.cssFloat = "center";
 	editLocations.addEventListener("click", function() { editLocationsAction(ref) })
 	div.appendChild(document.createElement("p"));
-	div.appendChild(getData);
-	div.appendChild(document.createTextNode(" "));
 	div.appendChild(finish);
+	div.appendChild(document.createTextNode(" "));
+	div.appendChild(exportRange);
 	div.appendChild(document.createTextNode(" "));
 	div.appendChild(editEmp);
 	div.appendChild(document.createTextNode(" "));
@@ -402,8 +402,8 @@ function cleanUp(ref) {
 	});
 }
 
-function getDataAction(ref) {
-	var stringvar = '<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"><p>Choose Export Dates</p><p>Start: <input type="text" id="datepicker1"></p><p>End: <input type="text" id="datepicker2"></p></div></div></div>';
+function exportRangeAction(ref) {
+	var stringvar = '<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="myModalLabel" aria-hidden="true"><div class="modal-dialog"><div class="modal-content"><div class="modal-body"><p>Choose Export Dates:</p><p>From: <input type="text" id="fromDate"></p><p>To: <input type="text" id="toDate"></p><p>*Once clicking "Export", it may take a minute to retrieve the data.</p></div></div></div>';
 	var popUpList = $(stringvar);
 	$(popUpList).dialog({
 			title: 'Choose Export Dates',
@@ -415,31 +415,40 @@ function getDataAction(ref) {
 			buttons: [ {
 				text: "Export", 
 				click: function() {
-					var cutoff = new Date().getTime() - 43200000; //43200000 is 12 hours in milliseconds
-					var oldCancelled = ref.child("ARCHIVED").child("CANCELLED").orderByChild("timestamp").startAt(cutoff);
-					var oldCompleted = ref.child("ARCHIVED").child("COMPLETED").orderByChild("timestamp").startAt(cutoff);
-					oldCancelled.once("value", function(snapshot) {
-						var data = new Array(snapshot.numChildren());
-						var index = 0;
-						snapshot.forEach(function(child) {
-							var values = child.val();
-							data[index] = new Array(values.email, values.start, values.end, values.numRiders, values.time, values.waitTime, values.eta, values.endTime, values.vehicle);
-							index++;
+					var dateFormat = "mm/dd/yy";
+					var startDate;
+					var endDate;
+					try {
+						startDate = $.datepicker.parseDate(dateFormat, $('#fromDate').val());
+						endDate = $.datepicker.parseDate(dateFormat, $('#toDate').val());
+						var addADay = 86400000 // 24 hours in milliseconds, to include the end date
+						var oldCancelled = ref.child("ARCHIVED").child("CANCELLED").orderByChild("timestamp").startAt(startDate.getTime()).endAt(endDate.getTime()+addADay);
+						var oldCompleted = ref.child("ARCHIVED").child("COMPLETED").orderByChild("timestamp").startAt(startDate.getTime()).endAt(endDate.getTime()+addADay);
+						oldCancelled.once("value", function (snapshot) {
+							var data = new Array(snapshot.numChildren());
+							var index = 0;
+							snapshot.forEach(function (child) {
+								var values = child.val();
+								data[index] = new Array(values.email, values.start, values.end, values.numRiders, values.time, values.waitTime, values.eta, values.endTime, values.vehicle);
+								index++;
+							});
+							exportToCSV(data, "CANCELLED");
 						});
-						exportToCSV(data, "CANCELLED");
-					});
-					oldCompleted.once("value", function(snapshot) {
-						var data = new Array(snapshot.numChildren());
-						var index = 0;
-						snapshot.forEach(function(child) {
-							var values = child.val();
-							data[index] = new Array(values.email, values.start, values.end, values.numRiders, values.time, values.waitTime, values.eta, values.endTime, values.vehicle);
-							index++;
+						oldCompleted.once("value", function (snapshot) {
+							var data = new Array(snapshot.numChildren());
+							var index = 0;
+							snapshot.forEach(function (child) {
+								var values = child.val();
+								data[index] = new Array(values.email, values.start, values.end, values.numRiders, values.time, values.waitTime, values.eta, values.endTime, values.vehicle);
+								index++;
+							});
+							exportToCSV(data, "COMPLETED");
 						});
-						exportToCSV(data, "COMPLETED");
-					});
-					$(this).dialog("close");
-					$(this).dialog('destroy').remove();
+						$(this).dialog("close");
+						$(this).dialog('destroy').remove();
+					} catch (error) {
+						alert("Invalid input for dates, please check the selected dates.");
+					} 
 				}}, {
 				text: "Cancel", 
 				click: function() {
@@ -448,15 +457,35 @@ function getDataAction(ref) {
 				}
 			}]
 	});
-	$("#datepicker1").datetimepicker({
-		timeFormat: "hh:mm tt",
-		showSecond: true,
-	});
-	$("#datepicker2").datetimepicker({
-		timeFormat: "hh:mm tt",
-	});
+	$( function() {
+		var dateFormat = "mm/dd/yy",
+		  from = $( "#fromDate" ).datepicker({
+			 	minDate: -40,
+			  	maxDate: 0
+			})
+			.on( "change", function() {
+			  to.datepicker( "option", "minDate", getDate( this ) );
+			}),
+		  to = $( "#toDate" ).datepicker({
+				minDate: -40,
+				maxDate: 0
+		  })
+		  .on( "change", function() {
+			from.datepicker( "option", "maxDate", getDate( this ) );
+		  });
+		function getDate( element ) {
+		  var date;
+		  try {
+			date = $.datepicker.parseDate( dateFormat, element.value );
+		  } catch( error ) {
+			date = null;
+		  }
+		  return date;
+		}
+	  } );
 	$(popUpList).parent().children().children('.ui-dialog-titlebar-close').hide();
 	$(popUpList).dialog('open');
+	$('#fromDate').blur();
 }
 
 // Method for moving the completed/cancelled rides to archived.
@@ -1330,8 +1359,7 @@ function cancelAction(email, ref, type) {
 		var user = ref.child(email);
 		user.once("value", function(snapshot) {
 			var ts = snapshot.val().timestamp
-			user.update({"endTime" : "Cancelled by Dispatcher"});
-			user.update({"message" : message});
+			user.update({"endTime" : "Cancelled by Dispatcher", "message" : message});
 			var cancelled = firebase.database().ref().child("CANCELLED RIDES");
 			cancelled.child(email + "_" + ts).set({ 
 				email: snapshot.val().email,
