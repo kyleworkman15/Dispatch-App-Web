@@ -1,7 +1,7 @@
 {
    "rules": {
-     ".read": "auth.uid == root.child('ADMIN').child('kyle').val() || auth.uid == root.child('ADMIN').child('dispatch').val()",
-     ".write": "auth.uid == root.child('ADMIN').child('kyle').val() || auth.uid == root.child('ADMIN').child('dispatch').val()",
+     ".read": "auth.uid == root.child('ADMIN').child('kyle').val() || auth.uid == root.child('ADMIN').child('dispatch').val() || auth.uid == root.child('ADMIN').child('michael').val()",
+     ".write": "auth.uid == root.child('ADMIN').child('kyle').val() || auth.uid == root.child('ADMIN').child('dispatch').val() || auth.uid == root.child('ADMIN').child('michael').val()",
      "PENDING RIDES": {
        "$email": {
          ".read": "auth.token.email.contains('@augustana.edu') && auth.token.email == $email.replace(',', '.')",
